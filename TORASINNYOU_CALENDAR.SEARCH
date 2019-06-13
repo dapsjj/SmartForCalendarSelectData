@@ -15,6 +15,7 @@ export PATH=/home/SMART_TRIAL:/home/SMART:/usr/local/bin:${PATH}
 export LANG=ja_JP.UTF-8
 
 HOME=/home/trial
+#ログディレクトリ定義
 logd=${HOME}/AP/TORASINNYOU/LOG                  # ログディレクトリ
 
 # 走行ログの記録
@@ -35,16 +36,6 @@ endDate=${paraEndDate:0:4}-${paraEndDate:4:2}-${paraEndDate:6:2}         #加工
 eventStatus="confirmed"                                                  #確認されたイベント
 eventVisibility="private"                                                #プライベートイベント
 
-#１、パラメータ　
-#dd bs=$CONTENT_LENGTH                            |
-#qsstr -l_ -i_                                    >${tmp}-param
-
-#guid=$(readvalue -uguid ${tmp}-param)
-#usercd=$(readvalue -uusercd $tmp-param)
-
-#echo "Content-type:text/html;charset=utf-8"
-#echo ""
-
 
 # エラー時の終了処理定義
 ERROR_EXIT(){
@@ -60,26 +51,26 @@ rm -rf ${semd}/$(basename $0)*${sday}
 if [ -e ${lv3d}/ALLEVENTS.gz ];then
     ##ファイルバックアップ
     
-	echo ${paraGmailList} |sed 's/\,/ /g' | tov >${tmp}-gmailList
+	echo ${paraGmailList} |sed 's/\,/ /g' | tov >${tmp}-gmailList #","を" "に置き換える
 	zcat ${lv3d}/ALLEVENTS.gz | nkf -wxLu | hejoin -k80 <(nkf -wxLu ${tmp}-gmailList) - |
 	awk '(substr($30,1,10)>="'${startDate}'"&&substr($33,1,10)<="'${endDate}'")||(substr($31,1,10)>="'${startDate}'"&&substr($34,1,10)<="'${endDate}'")' |
-	selcol -c3 -c14 -c18 -c30,31 -c33,34 -c43 -c13 |
+	#1.カレンダーのタイトル 2.イベントの状態 3.イベントのタイトル 4.イベント開始日 5.イベント開始時間 6.イベント終了日 7.イベント終了時間 8.イベントの可視性
+	selcol -c3 -c14 -c18 -c30,31 -c33,34 -c43 |
 	selrow -e '$2=="'${eventStatus}'"'        |
 	selrow -e '$8!="'${eventVisibility}'"'    > ${tmp}-result
 	[ $(errchk ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	#
 	
 	if [ -s ${tmp}-result ] ; then
-	   while read rootSummary status summary startdate starttime enddate endtime visibility pkid; do 
+	   while read rootSummary status summary startdate starttime enddate endtime visibility; do 
 		 if [ "${starttime}" == "_" ] && [ "${enddate}" == "_" ];then
 		    enddate=$(sdate ${enddate}d/-1)
-			echo ${rootSummary} ${status} ${summary} ${startdate} ${starttime} ${enddate} ${endtime} ${visibility} ${pkid}>> ${tmp}-file    
+			echo ${rootSummary} ${status} ${summary} ${startdate} ${starttime} ${enddate} ${endtime} ${visibility} >> ${tmp}-file    
 		 else 
 			#starttime=${starttime:0:10}-${starttime:11:5}
 			starttime=${starttime:0:16}
 			#endtime=${endtime:0:10}-${endtime:11:5}
 			endtime=${endtime:0:16}
-			echo ${rootSummary} ${status} ${summary} ${startdate} ${starttime} ${enddate} ${endtime} ${visibility} ${pkid} >> ${tmp}-file  		
+			echo ${rootSummary} ${status} ${summary} ${startdate} ${starttime} ${enddate} ${endtime} ${visibility} >> ${tmp}-file  		
 		 fi                                 
 	   :; done < ${tmp}-result
 	else
@@ -90,7 +81,10 @@ else
 fi
 
 
-cat ${tmp}-file
+cat ${tmp}-file|cat <(echo 'rootSummary status summary startDate startTime endDate endTime visibility') - | tojson -h > ${tmp}-file-2
+[ $(errchk ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+
+cat ${tmp}-file-2
 [ $(errchk ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
 
 # 終了
