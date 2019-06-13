@@ -14,14 +14,17 @@ export PATH=/home/SMART:/home/SMART_TRIAL:/usr/local/bin:${PATH}
 export LANG=ja_JP.UTF-8
 
 
-#ログディレクトリ定義
+HOME=/home/trial
 logd=/home/trial/AP/TORASINNYOU/LOG             # ログディレクトリ
+
+
 
 # 走行ログの記録
 echo   "${logd}/LOG.$(basename $0).$(date +%Y%m%d)_$(date +%H%M%S)_$$" &> /dev/null
 exec 2> ${logd}/LOG.$(basename $0).$(date +%Y%m%d)_$(date +%H%M%S)_$$
 
-# ディレクトリ定義
+# 変数の定義
+semd=${HOME}/SEMAPHORE
 tmp=/tmp/$$-$(basename $0)_$(date +%Y%m%d)_$(date +%H%M%S)
 shld=/home/trial/AP/TORASINNYOU/CGI
 
@@ -29,6 +32,12 @@ shld=/home/trial/AP/TORASINNYOU/CGI
 echo "Content-type:text/xml;charset=UTF-8"
 echo ""
 
+
+# エラー時の終了処理定義
+ERROR_EXIT(){
+  touch ${semd}/$(basename $0).${HOSTNAME}.ERROR.${sday}
+  exit 1
+}
 
 #１、パラメータ　
 dd bs=$CONTENT_LENGTH                            |
