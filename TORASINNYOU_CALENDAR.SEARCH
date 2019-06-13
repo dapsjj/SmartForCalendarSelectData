@@ -81,7 +81,7 @@ else
 fi
 
 
-cat ${tmp}-file|cat <(echo 'rootSummary status summary startDate startTime endDate endTime visibility') - | tojson -h > ${tmp}-file-2
+cat ${tmp}-file|cat <(echo 'rootSummary status summary startDate startTime endDate endTime visibility') - | tojson -h > ${tmp}-file-2 #JSON形式に処理します
 [ $(errchk ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
 
 cat ${tmp}-file-2
