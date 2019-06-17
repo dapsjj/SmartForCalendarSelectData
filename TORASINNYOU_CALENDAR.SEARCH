@@ -15,7 +15,6 @@ export PATH=/home/SMART_TRIAL:/home/SMART:/usr/local/bin:${PATH}
 export LANG=ja_JP.UTF-8
 
 HOME=/home/trial
-#ログディレクトリ定義
 logd=${HOME}/AP/TORASINNYOU/LOG                  # ログディレクトリ
 
 # 走行ログの記録
@@ -52,7 +51,7 @@ if [ -e ${lv3d}/ALLEVENTS.gz ];then
     ##ファイルバックアップ
     
 	echo ${paraGmailList} |sed 's/\,/ /g' | tov >${tmp}-gmailList #","を" "に置き換える
-	zcat ${lv3d}/ALLEVENTS.gz | nkf -wxLu | hejoin -k80 <(nkf -wxLu ${tmp}-gmailList) - |
+	zcat ${lv3d}/ALLEVENTS.gz | hejoin -k80 ${tmp}-gmailList - |
 	awk '(substr($30,1,10)>="'${startDate}'"&&substr($33,1,10)<="'${endDate}'")||(substr($31,1,10)>="'${startDate}'"&&substr($34,1,10)<="'${endDate}'")' |
 	#1.カレンダーのタイトル 2.イベントの状態 3.イベントのタイトル 4.イベント開始日 5.イベント開始時間 6.イベント終了日 7.イベント終了時間 8.イベントの可視性
 	selcol -c3 -c14 -c18 -c30,31 -c33,34 -c43 |
