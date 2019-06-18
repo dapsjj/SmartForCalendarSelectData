@@ -43,31 +43,41 @@ ERROR_EXIT(){
 dd bs=$CONTENT_LENGTH                            |
 qsstr -l_ -i_                                    >${tmp}-param
 
+#echo '{"test":"success"}'
+
+#exit 0
+
 # パラメータ取得
-#gmailList=$(readvalue -u "gmailList" $tmp-param)
-#startDate=$(readvalue -u "startDate" $tmp-param)
-#endDate=$(readvalue -u "endDate" $tmp-param)
+gmailList=$(readvalue -ugmailList $tmp-param)
+startDate=$(readvalue -ustartDate $tmp-param)
+endDate=$(readvalue -uendDate $tmp-param)
 
 
 #test
-gmailList=$1
-startDate=$2
-endDate=$3
+#gmailList=$1
+#startDate=$2
+#endDate=$3
 #
 
 # 検索実行
-if [ $# == 3 ];then
-   shl=TORASINNYOU_CALENDAR.SEARCH
-fi
+#if [ $# == 3 ];then
+   
+#fi
+shl=TORASINNYOU_CALENDAR.SEARCH
 ${shld}/${shl} ${gmailList} ${startDate} ${endDate}>${tmp}-result
 [ $? -eq 0 ] || ERROR_EXIT
 
 # 結果表示
-cat ${tmp}-result
+# 
+
+echo '{"data_result":' > $tmp-resultfile
+cat ${tmp}-result >> $tmp-resultfile
+echo '}' >> $tmp-resultfile
+cat $tmp-resultfile
 
 #/////////////////////////////////////////////////////////////////////////
 # 終了処理
 #/////////////////////////////////////////////////////////////////////////
 # 終了
-rm -Rf ${tmp}-* &> /dev/null
+# rm -Rf ${tmp}-* &> /dev/null
 exit 0
