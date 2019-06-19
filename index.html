@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+ <head> 
+  <title>カレンダー</title> 
+  <meta charset="UTF-8">
+  <link href="css/bootstrap.min.css?v1.01" rel="stylesheet" type="text/css" /> 
+  <link href="css/bootstrap-select.css?v1.01" rel="stylesheet" type="text/css" /> 
+  <link href="css/calendar.css?v1.01" rel="stylesheet" type="text/css" /> 
+  <script src="js/jquery-1.11.3.min.js?v1.01"></script> 
+  <script src="js/bootstrap-select.js?v1.01"></script> 
+  <script src="js/calendar.js?v1.01"></script> 
+ </head> 
+ <body> 
+  <div id="mainDiv"> 
+   <div> 
+    <h1 id="myTitle">カレンダーの取得</h1> 
+    <span class="c1">メールアドレス</span> 
+    <input type="text" placeholder="メールアドレス" id="gmailList" name="gmailList" class="form-control" /> 
+    <span id="gmailListMessage" class="errfont"></span> 
+    <br /> 
+    <span class="c1">開始日</span> 
+    <input type="text" placeholder="開始日" id="startDate" name="startDate" class="form-control" /> 
+    <span id="startDateMessage" class="errfont"></span> 
+    <br /> 
+    <span class="c1">終了日</span> 
+    <input type="text" placeholder="終了日" id="endDate" name="endDate" class="form-control" /> 
+    <span id="endDateMessage" class="errfont"></span> 
+    <br /> 
+    <input type="button" id="search" class="btn btnNormal btn-primary" value="クエリー" /> 
+   </div> 
+  </div> 
+  <div id="searchDiv" class="panel-body"> 
+    <table id="table_search" border="1" class="table table-bordered text-right"> 
+     <thead id="tbHead"> 
+      <tr class="table-thead-tr"> 
+       <th class="text-center" width="120px">カレンダータイトル</th> 
+       <th class="text-center" width="120px">イベント状態</th> 
+       <th class="text-center" width="120px">イベントタイトル</th> 
+       <th class="text-center" width="120px">イベント開始日</th> 
+       <th class="text-center" width="120px">イベント開始時間</th> 
+	   <th class="text-center" width="120px">イベント終了日</th> 
+       <th class="text-center" width="120px">イベント終了時間</th> 
+       <th class="text-center" width="120px">イベントの可視性</th> 
+      </tr> 
+     </thead> 
+     <tbody id="tbBody" style="overflow:auto;"> 
+     </tbody> 
+    </table> 
+   </div> 
+  <footer> 
+  </footer>  
+ </body>
+</html>
