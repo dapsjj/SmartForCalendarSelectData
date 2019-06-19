@@ -92,6 +92,11 @@ $(function() {
 		$("select").removeClass("errbk"); //移除下拉列表红色背景
 		//获取表单对象中的值
 		var gmailList = $("#gmailList").val(); //メールアドレス
+		var arrayGmailList = new Array(); //定义一数组
+		arrayGmailList = gmailList.split(" "); //字符分割
+		var strGmailList = arrayGmailList.join(",");
+
+		
 		var startDate = $("#startDate").val(); //開始日
 		var endDate = $("#endDate").val(); //終了日
 		//设置错误标记
@@ -127,7 +132,7 @@ $(function() {
 				type: "POST",
 				url: "http://172.17.4.74:8082/TORASINNYOU/CGI/TORASINNYOU_CALENDAR.MAKECSV.CGI",
 				data: {
-					"gmailList": gmailList,
+					"gmailList": strGmailList,
 					"startDate": startDate,
 					"endDate": endDate
 				},
