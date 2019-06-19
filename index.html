@@ -26,7 +26,8 @@
     <input type="text" placeholder="終了日" id="endDate" name="endDate" class="form-control" /> 
     <span id="endDateMessage" class="errfont"></span> 
     <br /> 
-    <input type="button" id="search" class="btn btnNormal btn-primary" value="クエリー" /> 
+    <!--<input type="button" id="calendarSearch" class="btn btnNormal btn-primary" value="クエリー" /> -->
+	<input type="button" id="calendarDownload" class="btn btnNormal btn-primary" value="ダウンロード" /> 
    </div> 
   </div> 
   <div id="searchDiv" class="panel-body"> 
@@ -48,6 +49,7 @@
     </table> 
    </div> 
   <footer> 
-  </footer>  
+  </footer>
+	<iframe id="my_iframe" style="display:none;"></iframe>  
  </body>
 </html>
