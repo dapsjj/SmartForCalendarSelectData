@@ -84,8 +84,8 @@ else
 fi
 
 cd ${downloadPath}
-cat ${tmp}-file|cat <(echo 'rootSummary status summary startDate startTime endDate endTime visibility') - | 
-#sed 's/,/_/g'  |tr ' ' ',' > ${tmp}-file-2 
+#cat ${tmp}-file|cat <(echo 'rootSummary status summary startDate startTime endDate endTime visibility') - | 
+cat ${tmp}-file|cat <(echo '事件まとめ 事件状態 事件タイトル 事件開始日 事件開始時間 事件終了日 事件終了時間 事件可視性') - | 
 sed 's/,/_/g'  |sed 's/ /,/g'  > ${sysflg}_"calendar"_${stime}_.csv
 [ $(errchk ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
 
