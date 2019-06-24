@@ -1,5 +1,5 @@
 $(function() {
-
+	
 	initClear(); //tableを全部クリアする
 	//点击"クエリー"按钮的时候
 	$("#calendarSearch").click(function() {
@@ -86,6 +86,7 @@ $(function() {
 
 	//点击"ダウンロード"按钮的时候
 	$("#calendarDownload").click(function() {
+
 		//先清空以前的错误消息
 		$(".errfont").text(""); //移除提示中的文字
 		$("input[type='text']").removeClass("errbk"); //移除文本框红色背景
@@ -126,7 +127,8 @@ $(function() {
 			return;
 		} else {
 			var csvFileName = "";
-
+			
+			
 			//没有错误就发送ajax
 			$.ajax({
 				type: "POST",
@@ -136,34 +138,44 @@ $(function() {
 					"startDate": startDate,
 					"endDate": endDate
 				},
+				 
 				dataType: "json",
 				contentType: "application/json; charset=utf-8",
-				async: false,
+				beforeSend: function () {
+					$("#mainDiv").addClass("disabledDiv");//入力不可
+					$("#loadMask").show();
+				},
 				success: function(responseText) {
 					if (typeof(responseText) != "undefined" && responseText != "") {
 						if (responseText.successFlag == "error") { //error 
 							return;
 						} else {
 							csvFileName = responseText.successFlag;
+							DownloadUrl("http://172.17.4.74:8082/TORASINNYOU/CGI/TORASINNYOU_CALENDAR.DOWNLOAD.CGI?param="+csvFileName);
 						}
-
 					}
-
+					$("#mainDiv").removeClass("disabledDiv");//入力可
+					$("#loadMask").hide();
 				},
 
 				error: function(xhr, ajaxOptions, thrownError) {
-					console.info(xhr.status);
-					console.info(thrownError);
+					//console.info(xhr.status);
+					//console.info(thrownError);
+					$("#mainDiv").removeClass("disabledDiv");//入力可
+					$("#loadMask").hide();
 
 				}
 			});
+			
 
-			if (csvFileName != "error") {
+
+			/*if (csvFileName != "error") {
 				
 				DownloadUrl("http://172.17.4.74:8082/TORASINNYOU/CGI/TORASINNYOU_CALENDAR.DOWNLOAD.CGI?param="+csvFileName);
 				
+				$("#loadMask").hide();
 
-			}
+			}*/
 
 		}
 	});
