@@ -1,0 +1,513 @@
+#!/bin/bash -xv
+#
+# CHUPDATE.DAYMS.JINJIJOIN.TORASINNYOU >>> 人事関連データ作成
+#
+# Usage : CHUPDATE.DAYMS.JINJIJOIN.TORASINNYOU [YYYYMMDD]
+#
+# Written by chengguohui /Date: 20190624
+
+
+HOME=/home/creat
+# 走行ログの記録
+echo   "${HOME}/LOG/LOG.$(basename $0).$(date +%Y%m%d)_$(date +%H%M%S)_$$" &> /dev/null
+exec 2> ${HOME}/LOG/LOG.$(basename $0).$(date +%Y%m%d)_$(date +%H%M%S)_$$
+
+#/////////////////////////////////////////////////////////////////////////
+# 初期設定
+#/////////////////////////////////////////////////////////////////////////
+# パスの定義
+export PATH=/home/SMART:/home/SMART_TRIAL:/usr/local/bin:${PATH}
+export LANG=ja_JP.UTF-8
+
+# 変数の定義
+tmp=/tmp/$$-$(basename $0)_$(date +%Y%m%d)_$(date +%H%M%S)
+tmp=/tmp/chengguohui
+logd=${HOME}/LOG
+semd=${HOME}/SEMAPHORE
+sday=$(date +%Y%m%d)
+sday1=$(date +%Y)
+lv3d=/TORASINNYOU/LV3/CAREER                             # Level3ディレクトリ
+lv3d1=/TORASINNYOU/LV3/JINJI                             # Level3ディレクトリ1
+lv3d2=/TORASINNYOU/LV3/ROTATIONS                         # Level3ディレクトリ2
+
+# 引き数の確認
+if [ $# -eq 1 ]; then
+   sday=$1
+else
+   sday=$(date +%Y%m%d)
+fi
+
+# エラー時の終了処理定義
+ERROR_EXIT(){
+  touch ${semd}/$(basename $0).${HOSTNAME}.ERROR.${sday}
+  exit 1
+}
+
+#SEMAPHORE削除
+rm -rf ${semd}/$(basename $0)*${sday}
+
+# 開始時刻の記録
+echo "${HOSTNAME} $(basename $0) ${sday} START $(date +%Y%m%d%H%M%S)" >> ${logd}/UPCNT.${sday}
+touch ${semd}/$(basename $0).${HOSTNAME}.START.${sday}
+#/////////////////////////////////////////////////////////////////////////
+# 処理部分
+#/////////////////////////////////////////////////////////////////////////
+
+#判断LV3ファイルJMSTEMPLOYMENTTYPE.gz存在
+if [ -e ${lv3d1}/JMSTEMPLOYMENTTYPE.gz ];then
+    ##ファイルバックアップ
+    
+	if [ $(zcat ${lv3d1}/JMSTEMPLOYMENTTYPE.gz                                 | rowc) != 0 ];then
+		#JMSTEMPLOYMENTTYPE.gzの第1、2列を取る
+		zcat ${lv3d1}/JMSTEMPLOYMENTTYPE.gz                                    | 
+		selcol -c1,2                                                           | 
+		fmtfixed -w2 -c1                                                       |
+		ssort -k1                                                              >${tmp}-jmstemploymenttype
+		#テキスト"${tmp}-jmstemploymenttype"2列の内容:
+		#1.社員区分番号 2.社員区分名前
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルEMPLOYEEBASIC.gz存在
+if [ -e ${lv3d1}/EMPLOYEEBASIC.gz ];then
+    ##ファイルバックアップ
+    
+	if [ $(zcat ${lv3d1}/EMPLOYEEBASIC.gz                                      | rowc) != 0 ];then
+		#EMPLOYEEBASIC.gzの第1、2、3、28、8、9、12、11、19、18、24、76、14、10列を取る
+		zcat ${lv3d1}/EMPLOYEEBASIC.gz                                         | 
+		selcol -c1,3 -c28 -c8,9 -c12 -c11 -c19 -c18 -c24 -c76 -c14 -c10        | 
+		fmtfixed -w2 -c4                                                       |
+		selrow -e '$13!=1&&$13!=2'                                             |
+        selrow -e '$4==1||$4==3'		                                       |
+		delcol -c13                                                            >${tmp}-employeebasic1
+		#テキスト"${tmp}-employeebasic1"13列の内容:
+		#1.従業員管理ID 2.従業員コード 3.従業員名称 4.従業員区分NO 5.性別
+		#6.生年月日(生年) 7.社歴（グループ） 8.入社日（トライアル） 9.所属会社コード 10.職位
+		#11.役職NO 12.グループ入社区分 13.入社日（グループ）
+		
+		#年齢を計る
+		crossjoin ${tmp}-employeebasic1 <(echo ${sday1})                       |
+		awk '{print $0,$14-substr($6,0,4)}'                                    |
+		selcol -c1,5 -c15 -c7,12 -c6 -c13 -c14                                 >${tmp}-employeebasic2
+		#テキスト"${tmp}-employeebasic2"15列の内容:
+		#1.従業員管理ID 2.従業員コード 3.従業員名称 4.従業員区分NO 5.性別
+		#6.年齢 7.社歴（グループ） 8.入社日（トライアル） 9.所属会社コード 10.職位
+		#11.役職NO 12.グループ入社区分 13.生年月日(生年) 14.入社日（グループ） 15.現在の日付
+		
+		#社歴(年)を計算する
+		cat ${tmp}-employeebasic2                                              | 
+        awk '{print $0,$15-substr($14,0,4)}'                                   |
+		selcol -c1,7 -c16 -c9,12 -c14 -c8 -c13                                 >${tmp}-employeebasic3
+		#テキスト"${tmp}-employeebasic3"15列の内容:
+		#1.従業員管理ID 2.従業員コード 3.従業員名称 4.従業員区分NO 5.性別
+		#6.年齢 7.社歴（グループ） 8.社歴(年)※GP入社日 9.所属会社コード 10.職位
+		#11.役職NO 12.グループ入社区分 13.入社日（グループ） 14.入社日（トライアル） 15.生年月日(生年)
+		
+		#「採用区分」の転換
+		cat ${tmp}-employeebasic3                                              | 
+		awk '{if($12==1){print "新卒",$0}else if($12==2){print "中途",$0}else{print "null",$0}}' |
+		selcol -c2,12 -c1 -c14,16                                              >${tmp}-employeebasic
+		#テキスト"${tmp}-employeebasic"15列の内容:
+		#1.従業員管理ID 2.従業員コード 3.従業員名称 4.従業員区分NO 5.性別
+		#6.年齢 7.社歴（グループ） 8.社歴(年)※GP入社日 9.所属会社コード 10.職位
+		#11.役職NO 12.採用区分 13.入社日（グループ） 14.入社日（トライアル） 15.生年月日(生年)
+		
+		#関連表
+		hrjoin -k4 -inull ${tmp}-jmstemploymenttype ${tmp}-employeebasic       |
+        delcol -c4                                                             |		
+		fmtfixed -w10 -c1                                                      >${tmp}-jmstemploymenttype-employeebasic
+		#テキスト"${tmp}-jmstemploymenttype-employeebasic"15列の内容:
+		#1.従業員管理ID 2.従業員コード 3.従業員名称 4.社員区分名前 5.性別
+		#6.年齢 7.社歴（グループ） 8.社歴(年)※GP入社日 9.所属会社コード 10.職位
+		#11.役職NO 12.採用区分 13.入社日（グループ） 14.入社日（トライアル） 15.生年月日(生年)
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルATTRIBUTE.gz存在
+if [ -e ${lv3d1}/ATTRIBUTE.gz ];then
+    ##ファイルバックアップ
+    
+	if [ $(zcat ${lv3d1}/ATTRIBUTE.gz                                          | rowc) != 0 ];then
+		#ATTRIBUTE.gzの第1、2、3、4、5、6、7、8、21、37、16、14列を取る
+		zcat ${lv3d1}/ATTRIBUTE.gz                                             | 
+		selcol -c1,8 -c21 -c37 -c16 -c14                                       | 
+		fmtfixed -w10 -c2,8                                                    >${tmp}-attribute
+		#テキスト"${tmp}-attribute"12列の内容:
+		#1.EmployeeManagementID 2.所属会社コード 3.管轄NO１ 4.所属・チームNO 5.課・ディビジョンNO
+		#6.エリアNO 7.店舗NO 8.担当商品 9.予備項目２(世代GP) 10.給与ステージ 
+		#11.職位等級 12.配転区分NO
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルHIERARCHYCLASS.gz存在
+if [ -e ${lv3d2}/HIERARCHYCLASS.gz ];then
+    ##ファイルバックアップ
+    
+	if [ $(zcat ${lv3d2}/HIERARCHYCLASS.gz                                     | rowc) != 0 ];then
+		#HIERARCHYCLASS.gzの第1、2、3、4、5、6、7、8列を取る
+		zcat ${lv3d2}/HIERARCHYCLASS.gz                                        | 
+		selcol -c1,8                                                           |
+		fmtfixed -w10 -c1,7                                                    | 
+		ssort -k1,7                                                            >${tmp}-hierarchyclass
+		#テキスト"${tmp}-hierarchyclass"8列の内容:
+		#1.Company_code 2.管轄1コード 3.所属・チームコード 4.課・ディビジョンコード 5.エリアコード	
+		#6.店舗コード 7.担当商品コード 8.担当商品名
+
+		#関連表
+		hrjoin -k2,8 -inull ${tmp}-hierarchyclass ${tmp}-attribute             | 
+		delcol -c8                                                             | 
+		fmtfixed -w10 -c1                                                      | 
+		ssort -k1                                                              >${tmp}-hierarchyclass-attribute
+		#テキスト"${tmp}-hierarchyclass-attribute"12列の内容:
+		#1.EmployeeManagementID 2.所属会社コード 3.管轄NO１ 4.所属・チームNO 5.課・ディビジョンNO
+		#6.エリアNO 7.店舗NO 8.担当商品名 9.予備項目２(世代GP) 10.給与ステージ 
+		#11.職位等級 12.配転区分NO
+		
+		#関連表
+		hrjoin -k1 -inull ${tmp}-hierarchyclass-attribute ${tmp}-jmstemploymenttype-employeebasic | 
+		fmtfixed -w10 -c2,7                                                    >${tmp}-hierarchyclass-attribute-jmstemploymenttype-employeebasic
+		#テキスト"${tmp}-hierarchyclass-attribute-jmstemploymenttype-employeebasic"26列の内容:
+		#1.従業員管理ID 2.所属会社コード 3.管轄NO１ 4.所属・チームNO 5.課・ディビジョンNO
+		#6.エリアNO 7.店舗NO 8.担当商品名 9.予備項目２(世代GP) 10.給与ステージ 
+		#11.職位等級 12.配転区分NO 13.従業員コード 14.従業員名称 15.社員区分名前
+		#16.性別 17.年齢 18.社歴（グループ） 19.社歴(年)※GP入社日 20.所属会社コード 
+		#21.職位 22.役職NO 23.採用区分 24.入社日（グループ） 25.入社日（トライアル）
+		#26.生年月日(生年)
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルORGANIZATIONALL.gz存在
+if [ -e ${lv3d1}/ORGANIZATIONALL.gz ];then
+    ##ファイルバックアップ
+    
+	if [ $(zcat ${lv3d1}/ORGANIZATIONALL.gz                                    | rowc) != 0 ];then
+		#ORGANIZATIONALL.gzの第1、4、7、10、13、16、2、5、8、11、14、17列を取る
+		zcat ${lv3d1}/ORGANIZATIONALL.gz                                       | 
+		selcol -c1 -c4 -c7 -c10 -c13 -c16 -c2 -c5 -c8 -c11 -c14 -c17           | 
+		fmtfixed -w10 -c1,6                                                    | 
+		ssort -k1,6                                                            >${tmp}-organizationall
+		#テキスト"${tmp}-organizationall"12列の内容:
+		#1.Company_code 2.Belong1Code 3.Belong2Code 4.Belong3Code 5.AreaCode
+		#6.StoreCode 7.Company_name 8.Belong1Name 9.Belong2Name 10.Belong3Name
+		#11.AreaName 12.StoreName
+		
+		#関連表
+		hrjoin -k2,7 -inull ${tmp}-organizationall ${tmp}-hierarchyclass-attribute-jmstemploymenttype-employeebasic | 
+		delcol -c3,6                                                           |
+		ssort -k1                                                              >${tmp}-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic
+		#テキスト"${tmp}-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic"28列の内容:
+		#1.従業員管理ID 2.所属会社コード 3.店舗NO(店舗CD) 4.Company_name(会社) 5.Belong1Name(本部) 
+		#6.Belong2Name(支社・支店(部)) 7.Belong3Name(支店・課) 8.AreaName(エリア) 9.StoreName(店舗) 10.担当商品名 
+		#11.予備項目２(世代GP) 12.給与ステージ 13.職位等級 14.配転区分NO 15.従業員コード 
+		#16.従業員名称 17.社員区分名前 18.性別 19.年齢 20.社歴（グループ）
+		#21.社歴(年)※GP入社日 22.所属会社コード 23.職位 24.役職NO 25.採用区分 
+		#26.入社日（グループ） 27.入社日（トライアル） 28.生年月日(生年)
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルCAREEOTHERCOMPANY.gz存在
+if [ -e ${lv3d}/CAREEOTHERCOMPANY.gz ];then
+    ##ファイルバックアップ
+
+	if [ $(zcat ${lv3d}/CAREEOTHERCOMPANY.gz                                   | rowc) != 0 ];then
+		#CAREEOTHERCOMPANY.gzの第1、3、2列を取ります
+		zcat ${lv3d}/CAREEOTHERCOMPANY.gz                                      | 
+		selcol -c1 -c3 -c2                                                     |		
+		fmtfixed -w10 -c1                                                      |
+		#1.EmployeeManagementID 2.会社名 3.年月日
+		
+		#「TRIAL何社目」の計算
+		ssort -k1,2                                                            |
+		lstrow -k1,2                                                           |
+		selcol -c1 -c3 -c2                                                     |
+		ssort -k1,2                                                            |
+		kcount -k1                                                             |
+		awk '{print $1,$2+1}'                                                  >${tmp}-careeothercompany
+		#テキスト"${tmp}-careeothercompany"2列の内容:
+		#1.EmployeeManagementID 2.TRIAL何社目
+		
+		#関連表
+		hrjoin -k1 -i0 ${tmp}-careeothercompany ${tmp}-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic |
+		delcol -c3 -c23                                                        |
+		fmtfixed -w2 -c12                                                      |
+		fmtfixed -w5 -c13                                                      |
+		fmtfixed -w2 -c14                                                      >${tmp}-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic
+		#テキスト"${tmp}-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic"27列の内容:
+        #1.従業員管理ID 2.TRIAL何社目 3.店舗NO(店舗CD) 4.Company_name(会社) 5.Belong1Name(本部)
+		#6.Belong2Name(支社・支店(部)) 7.Belong3Name(支店・課) 8.AreaName(エリア) 9.StoreName(店舗) 10.担当商品名
+		#11.予備項目２(世代GP) 12.給与ステージ 13.職位等級 14.配転区分NO 15.従業員コード 
+		#16.従業員名称 17.社員区分名前 18.性別 19.年齢 20.社歴（グループ）
+		#21.社歴(年)※GP入社日 22.職位 23.役職NO 24.採用区分 25.入社日（グループ） 
+		#26.入社日（トライアル） 27.生年月日(生年)
+        [ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルMSTSALARYSTAGE.gz存在
+if [ -e ${lv3d1}/MSTSALARYSTAGE.gz ];then
+    ##ファイルバックアップ
+    
+	if [ $(zcat ${lv3d1}/MSTSALARYSTAGE.gz                                     | rowc) != 0 ];then
+		#MSTSALARYSTAGE.gzの第1、2列を取る
+		zcat ${lv3d1}/MSTSALARYSTAGE.gz                                        | 
+		selcol -c1,2                                                           | 
+		fmtfixed -w2 -c1                                                       |
+		ssort -k1                                                              >${tmp}-mstsalarystage
+		#テキスト"${tmp}-mstsalarystage"2列の内容:
+		#1.給与ステージコード 2.給与ステージ
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルMSTGPGRADE.gz存在
+if [ -e ${lv3d1}/MSTGPGRADE.gz ];then
+    ##ファイルバックアップ
+    
+	if [ $(zcat ${lv3d1}/MSTGPGRADE.gz                                         | rowc) != 0 ];then
+		#MSTGPGRADE.gzの第1、2列を取る
+		zcat ${lv3d1}/MSTGPGRADE.gz                                            | 
+		selcol -c1,2                                                           | 
+		fmtfixed -w5 -c1                                                       |
+		ssort -k1                                                              >${tmp}-mstgpgrade
+		#テキスト"${tmp}-mstgpgrade"2列の内容:
+		#1.基本等級コード 2.基本等級
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルJMSTEMPIOYEETYPE.gz存在
+if [ -e ${lv3d1}/JMSTEMPIOYEETYPE.gz ];then
+    ##ファイルバックアップ
+    
+	if [ $(zcat ${lv3d1}/JMSTEMPIOYEETYPE.gz                                   | rowc) != 0 ];then
+		#JMSTEMPIOYEETYPE.gzの第1、2列を取る
+		zcat ${lv3d1}/JMSTEMPIOYEETYPE.gz                                      | 
+		selcol -c1,2                                                           | 
+		fmtfixed -w2 -c1                                                       |
+		ssort -k1                                                              >${tmp}-jmstemployeetype
+		#テキスト"${tmp}-jmstemployeetype"2列の内容:
+		#1.配転区分コード 2.配転区分名称
+		
+		#関連表
+		hrjoin -k12 -inull ${tmp}-mstsalarystage ${tmp}-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic |
+		delcol -c12                                                            >${tmp}-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic
+		#テキスト"${tmp}-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic"27列の内容:
+		#1.従業員管理ID 2.TRIAL何社目 3.店舗NO(店舗CD) 4.Company_name(会社) 5.Belong1Name(本部)
+		#6.Belong2Name(支社・支店(部)) 7.Belong3Name(支店・課) 8.AreaName(エリア) 9.StoreName(店舗) 10.担当商品名
+		#11.予備項目２(世代GP) 12.給与ステージ 13.職位等級 14.配転区分NO 15.従業員コード 
+		#16.従業員名称 17.社員区分名前 18.性別 19.年齢 20.社歴（グループ）
+		#21.社歴(年)※GP入社日 22.職位 23.役職NO 24.採用区分 25.入社日（グループ） 
+		#26.入社日（トライアル） 27.生年月日(生年)
+		
+		#関連表
+		hrjoin -k13 -inull ${tmp}-mstgpgrade ${tmp}-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic |
+		delcol -c13                                                            >${tmp}-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic
+		#テキスト"${tmp}-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic"27列の内容:
+		#1.従業員管理ID 2.TRIAL何社目 3.店舗NO(店舗CD) 4.Company_name(会社) 5.Belong1Name(本部)
+		#6.Belong2Name(支社・支店(部)) 7.Belong3Name(支店・課) 8.AreaName(エリア) 9.StoreName(店舗) 10.担当商品名
+		#11.予備項目２(世代GP) 12.給与ステージ 13.基本等級 14.配転区分NO 15.従業員コード 
+		#16.従業員名称 17.社員区分名前 18.性別 19.年齢 20.社歴（グループ）
+		#21.社歴(年)※GP入社日 22.職位 23.役職NO 24.採用区分 25.入社日（グループ） 
+		#26.入社日（トライアル） 27.生年月日(生年)
+		
+		#関連表
+        hrjoin -k14 -inull ${tmp}-jmstemployeetype ${tmp}-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic |
+		delcol -c14                                                            >${tmp}-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic
+		#テキスト"${tmp}-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic"27列の内容:
+		#1.従業員管理ID 2.TRIAL何社目 3.店舗NO(店舗CD) 4.Company_name(会社) 5.Belong1Name(本部)
+		#6.Belong2Name(支社・支店(部)) 7.Belong3Name(支店・課) 8.AreaName(エリア) 9.StoreName(店舗) 10.担当商品名
+		#11.予備項目２(世代GP) 12.給与ステージ 13.基本等級 14.配転区分NO 15.従業員コード 
+		#16.従業員名称 17.社員区分名前 18.性別 19.年齢 20.社歴（グループ）
+		#21.社歴(年)※GP入社日 22.職位 23.役職NO 24.採用区分 25.入社日（グループ） 
+		#26.入社日（トライアル） 27.生年月日(生年)
+		
+		#「世代GP」の生成
+		cat ${tmp}-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic |
+		selcol -c11 -c15,21 -c4,8 -c3 -c9,10 -c22,24 -c2 -c12,14 -c25,27 -c1   |
+		awk '{print "第"$1"世代",$0}'                                           |
+		delcol -c2                                                             >${tmp}-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic1
+		#テキスト"${tmp}-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic1"27列の内容:
+		#1.世代GP 2.従業員コード 3.従業員名称 4.社員区分名前 5.性別
+		#6.年齢 7.社歴（グループ） 8.社歴(年)※GP入社日 9.Company_name(会社) 10.Belong1Name(本部)
+		#11.Belong2Name(支社・支店(部)) 12.Belong3Name(支店・課) 13.AreaName(エリア) 14.店舗NO(店舗CD) 15.StoreName(店舗)		
+		#16.担当商品名 17.職位 18.役職NO 19.採用区分 20.TRIAL何社目 
+		#21.給与ステージ 22.職位等級 23.配転区分NO 24.入社日（グループ） 25.入社日（トライアル）
+		#26.生年月日(生年) 27.従業員管理ID    
+		
+		#「社歴GP（グループ入社微を基準として設定）」の生成
+		cat ${tmp}-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic1 | 
+		awk '{if($8>=0&&$8<=4){print "1_初級組(0～4)",$0}else if($8>=5&&$8<=9){print "2_中級組(5～9)",$0}else if($8>=10&&$8<=14){print "3_古株組(10～14)",$0}else{print "4_最大組(15～)",$0}}' >${tmp}-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic2
+		#テキスト"${tmp}-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic2"28列の内容:
+		#1.社歴GP（グループ入社微を基準として設定） 2.世代GP 3.従業員コード 4.従業員名称 5.社員区分名前 
+		#6.性別 7.年齢 8.社歴（グループ） 9.社歴(年)※GP入社日 10.Company_name(会社)
+		#11.Belong1Name(本部) 12.Belong2Name(支社・支店(部)) 13.Belong3Name(支店・課) 14.AreaName(エリア) 15.店舗NO(店舗CD) 
+		#16.StoreName(店舗) 17.担当商品名 18.職位 19.役職NO 20.採用区分 
+		#21.TRIAL何社目 22.給与ステージ 23.職位等級 24.配転区分NO 25.入社日（グループ）
+		#26.入社日（トライアル） 27.生年月日(生年) 28.従業員管理ID
+		
+		#「年代GP」の生成
+		cat ${tmp}-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic2 | 
+		awk '{if($7<20){print "1_10代",$0}else if($7>=20&&$7<30){print "2_20代",$0}else if($7>=30&&$7<40){print "3_30代",$0}else if($7>=40&&$7<50){print "4_40代",$0}else if($7>=50&&$7<60){print "5_50代",$0}else{print "6_60代",$0}}' |
+		selcol -c1 -c3 -c2 -c4,29                                              |
+		fmtfixed -w10 -c4                                                      >${tmp}-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3
+		#テキスト"${tmp}-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3"29列の内容:
+        #1.年代GP 2.世代GP 3.社歴GP（グループ入社微を基準として設定） 4.従業員コード 5.従業員名称 
+		#6.社員区分名前 7.性別 8.年齢 9.社歴（グループ） 10.社歴(年)※GP入社日
+		#11.Company_name(会社) 12.Belong1Name(本部) 13.Belong2Name(支社・支店(部)) 14.Belong3Name(支店・課) 15.AreaName(エリア)
+		#16.店舗NO(店舗CD) 17.StoreName(店舗) 18.担当商品名 19.職位 20.役職NO 
+		#21.採用区分 22.TRIAL何社目 23.給与ステージ 24.基本等級 25.働き方
+		#26.入社日（グループ） 27.入社日（トライアル） 28.生年月日(生年) 29.従業員管理ID 
+		
+		#「基本等級2」の生成
+		cat ${tmp}-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3 |
+		selcol -c4 -c24                                                        |
+		selrow -e '$2!="null"'                                                 |
+		sed 's/-/ /g'                                                          |
+        delcol -c2                                                             |
+        awk '{print $1,$2"-"$NF}'                                              |
+		ssort -k1                                                              >${tmp}-gpgradetwo
+        #テキスト"${tmp}-gpgradetwo"2列の内容:
+		#1.従業員コード 2.基本等級2                                                 
+		
+		#関連表
+		hrjoin -k4 -inull ${tmp}-gpgradetwo ${tmp}-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3 |
+		selcol -c1,4 -c6,25 -c5 -c26,30                                        |
+		delcol -c9                                                             >${tmp}-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3
+		#テキスト"${tmp}-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3"29列の内容:
+        #1.年代GP 2.世代GP 3.社歴GP（グループ入社微を基準として設定） 4.従業員コード 5.従業員名称
+		#6.社員区分名前 7.性別 8.年齢 9.社歴(年)※GP入社日 10.Company_name(会社)
+		#11.Belong1Name(本部) 12.Belong2Name(支社・支店(部)) 13.Belong3Name(支店・課) 14.AreaName(エリア) 15.店舗NO(店舗CD) 
+		#16.StoreName(店舗) 17.担当商品名 18.職位 19.役職NO 20.採用区分 
+		#21.TRIAL何社目 22.給与ステージ 23.基本等級 24.基本等級2 25.働き方 
+		#26.入社日（グループ） 27.入社日（トライアル） 28.生年月日(生年) 29.従業員管理ID
+		
+		#社歴を計算する
+        crossjoin ${tmp}-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3 <(echo ${sday}) |
+		selcol -c4 -c26 -c30                                                   |
+		awk '{if(substr($3,0,4)>=substr($2,0,4)&&substr($3,5,2)>=substr($2,5,2)){print $1,substr($3,0,4)-substr($2,0,4),substr($3,5,2)-substr($2,5,2)}else if(substr($3,0,4)>substr($2,0,4)&&substr($3,5,2)<substr($2,5,2)){print $1,substr($3,0,4)-substr($2,0,4)-1,12-(substr($2,5,2)-substr($3,5,2))}}' |
+		awk '{print $1,$2"年"$3"ヶ月"}'                                          |
+		ssort -k1                                                              >${tmp}-workingyears
+		#テキスト"${tmp}-workingyears"2列の内容:
+		#1.従業員コード 2.社歴
+		
+		#関連表
+		hrjoin -k4 ${tmp}-workingyears ${tmp}-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3 |
+        selcol -c1,4 -c6,9 -c5 -c10,30                                         >${tmp}-workingyears-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3
+		#テキスト"${tmp}-workingyears-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3"30列の内容:
+        #1.年代GP 2.世代GP 3.社歴GP（グループ入社微を基準として設定） 4.従業員コード 5.従業員名称
+		#6.社員区分名前 7.性別 8.年齢 9.社歴 10.社歴(年)※GP入社日 
+		#11.Company_name(会社) 12.Belong1Name(本部) 13.Belong2Name(支社・支店(部)) 14.Belong3Name(支店・課) 15.AreaName(エリア) 
+		#16.店舗NO(店舗CD) 17.StoreName(店舗) 18.担当商品名 19.職位 20.役職NO
+		#21.採用区分 22.TRIAL何社目 23.給与ステージ 24.基本等級 25.基本等級2
+		#26.働き方 27.入社日（グループ） 28.入社日（トライアル） 29.生年月日(生年) 30.従業員管理ID
+		
+		#日付書式変換
+		cat ${tmp}-workingyears-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3 |
+		selcol -c4 -c27,29                                                     |
+		awk '{print $1,substr($2,0,4)"-"substr($2,5,2)"-"substr($2,7,2),substr($3,0,4)"-"substr($3,5,2)"-"substr($3,7,2),substr($4,0,4)}' |
+		ssort -k1                                                              >${tmp}-dateformat
+		#テキスト"${tmp}-dateformat"4列の内容:
+		#1.従業員コード 2.入社日（グループ） 3.入社日（トライアル） 4.生年
+		
+		#関連表
+		hrjoin -k4 ${tmp}-dateformat ${tmp}-workingyears-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3 |
+        selcol -c1,4 -c8,29 -c5,7 -c33	                                       |
+		fmtfixed -w3 -c20                                                      >${tmp}-dateformat-workingyears-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3
+		#テキスト"${tmp}-dateformat-workingyears-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3"30列の内容:
+		#1.年代GP 2.世代GP 3.社歴GP（グループ入社微を基準として設定） 4.従業員コード 5.従業員名称
+		#6.社員区分名前 7.性別 8.年齢 9.社歴 10.社歴(年)※GP入社日 
+		#11.Company_name(会社) 12.Belong1Name(本部) 13.Belong2Name(支社・支店(部)) 14.Belong3Name(支店・課) 15.AreaName(エリア) 
+		#16.店舗NO(店舗CD) 17.StoreName(店舗) 18.担当商品名 19.職位 20.役職NO
+		#21.採用区分 22.TRIAL何社目 23.給与ステージ 24.基本等級 25.基本等級2
+		#26.働き方 27.入社日（グループ） 28.入社日（トライアル） 29.生年月日(生年) 30.従業員管理ID
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルJMSTPOSITION.gz存在
+if [ -e ${lv3d1}/JMSTPOSITION.gz ];then
+    ##ファイルバックアップ
+    
+	if [ $(zcat ${lv3d1}/JMSTPOSITION.gz                                       | rowc) != 0 ];then
+		#JMSTPOSITION.gzの第1、2列を取る
+		zcat ${lv3d1}/JMSTPOSITION.gz                                          | 
+		selcol -c1,2                                                           | 
+		fmtfixed -w3 -c1                                                       |
+		ssort -k1                                                              >${tmp}-jmstposition
+		#テキスト"${tmp}-jmstposition"2列の内容:
+		#1.職位番号 2.職位名称
+		
+		#関連表
+		hrjoin -k20 ${tmp}-jmstposition ${tmp}-dateformat-workingyears-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3 |
+		delcol -c20                                                            >${tmp}-result
+		#テキスト"${tmp}-result"30列の内容:
+		#1.年代GP 2.世代GP 3.社歴GP（グループ入社微を基準として設定） 4.従業員コード 5.従業員名称
+		#6.社員区分名前 7.性別 8.年齢 9.社歴 10.社歴(年)※GP入社日 
+		#11.Company_name(会社) 12.Belong1Name(本部) 13.Belong2Name(支社・支店(部)) 14.Belong3Name(支店・課) 15.AreaName(エリア) 
+		#16.店舗NO(店舗CD) 17.StoreName(店舗) 18.担当商品名 19.職位 20.役職
+		#21.採用区分 22.TRIAL何社目 23.給与ステージ 24.基本等級 25.基本等級2
+		#26.働き方 27.入社日（グループ） 28.入社日（トライアル） 29.生年月日(生年) 30.従業員管理ID
+		
+		#人事CSVの生成
+		cat <(echo '年代GP 世代GP 社歴GP（グループ入社微を基準として設定） 従業員コード 従業員名称 社員区分名前 性別 年齢 社歴 社歴(年)※GP入社日 Company_name(会社) Belong1Name(本部) Belong2Name(支社・支店(部)) Belong3Name(支店・課) AreaName(エリア) 店舗NO(店舗CD) StoreName(店舗) 担当商品名 職位 役職 採用区分 TRIAL何社目 給与ステージ 基本等級 基本等級2 働き方 入社日（グループ） 入社日（トライアル） 生年月日(生年) 従業員管理ID') ${tmp}-result |  
+		tr ' ' ','                                                             >jinji.csv
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+
+# /////////////////////////////////////////////////////////////////////////
+# 終了処理
+#/////////////////////////////////////////////////////////////////////////
+# 終了時刻の記録
+echo "${HOSTNAME} $(basename $0) ${sday} END $(date +%Y%m%d%H%M%S)" >> ${logd}/UPCNT.${sday}
+touch ${semd}/$(basename $0).${HOSTNAME}.END.${sday}
+
+# 終了
+#rm -rf ${tmp}-* 2>/dev/null
+exit 0
