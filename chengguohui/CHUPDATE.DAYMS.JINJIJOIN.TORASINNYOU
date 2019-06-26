@@ -21,7 +21,6 @@ export LANG=ja_JP.UTF-8
 
 # 変数の定義
 tmp=/tmp/$$-$(basename $0)_$(date +%Y%m%d)_$(date +%H%M%S)
-tmp=/tmp/chengguohui
 logd=${HOME}/LOG
 semd=${HOME}/SEMAPHORE
 sday=$(date +%Y%m%d)
@@ -339,7 +338,7 @@ if [ -e ${lv3d1}/JMSTEMPIOYEETYPE.gz ];then
 		#関連表
 		hrjoin -k13 -inull ${tmp}-mstgpgrade ${tmp}-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic |
 		delcol -c13                                                            >${tmp}-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic
-		#テキスト"${tmp}-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic"27列の内容:
+		#テキスト"${tmp}/mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic"27列の内容:
 		#1.従業員管理ID 2.TRIAL何社目 3.店舗NO(店舗CD) 4.Company_name(会社) 5.Belong1Name(本部)
 		#6.Belong2Name(支社・支店(部)) 7.Belong3Name(支店・課) 8.AreaName(エリア) 9.StoreName(店舗) 10.担当商品名
 		#11.予備項目２(世代GP) 12.給与ステージ 13.基本等級 14.配転区分NO 15.従業員コード 
