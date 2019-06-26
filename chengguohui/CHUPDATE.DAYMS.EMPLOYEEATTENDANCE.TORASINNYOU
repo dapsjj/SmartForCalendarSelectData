@@ -1,0 +1,151 @@
+#!/bin/bash -xv
+#
+# CHUPDATE.DAYMS.EMPLOYEEATTENDANCE.TORASINNYOU >>> 勤怠データ抽出作成
+#
+# Usage : CHUPDATE.DAYMS.EMPLOYEEATTENDANCE.TORASINNYOU [YYYYMMDD]
+#
+# Written by chengguohui /Date: 20190617
+
+
+HOME=/home/creat
+# 走行ログの記録
+echo   "${HOME}/LOG/LOG.$(basename $0).$(date +%Y%m%d)_$(date +%H%M%S)_$$" &> /dev/null
+exec 2> ${HOME}/LOG/LOG.$(basename $0).$(date +%Y%m%d)_$(date +%H%M%S)_$$
+
+#/////////////////////////////////////////////////////////////////////////
+# 初期設定
+#/////////////////////////////////////////////////////////////////////////
+# パスの定義
+export PATH=/home/SMART:/home/SMART_TRIAL:/usr/local/bin:${PATH}
+export LANG=ja_JP.UTF-8
+
+# 変数の定義
+#tmp=/tmp/$$-$(basename $0)_$(date +%Y%m%d%H%M%S)
+tmp=/tmp/chengguohui
+logd=${HOME}/LOG
+semd=${HOME}/SEMAPHORE
+lv3d1=/TORASINNYOU/LV3/JINJI                             # Level3ディレクトリ1
+lv3d2=/TORASINNYOU/LV3/KENTAI                            # Level3ディレクトリ2
+DataBegion="20190421"                                    # 開始日
+DataEnd="20190520"                                       # 終了日
+# 引き数の確認
+if [ $# -eq 1 ]; then
+   sday=$1
+else
+   sday=$(date +%Y%m%d)
+fi
+
+# エラー時の終了処理定義
+ERROR_EXIT(){
+  touch ${semd}/$(basename $0).${HOSTNAME}.ERROR.${sday}
+  exit 1
+}
+
+#SEMAPHORE削除
+rm -rf ${semd}/$(basename $0)*${sday}
+
+# 開始時刻の記録
+echo "${HOSTNAME} $(basename $0) ${sday} START $(date +%Y%m%d%H%M%S)" >> ${logd}/UPCNT.${sday}
+touch ${semd}/$(basename $0).${HOSTNAME}.START.${sday}
+#/////////////////////////////////////////////////////////////////////////
+# 処理部分
+#/////////////////////////////////////////////////////////////////////////
+
+#判断LV3ファイルOPERATIONPLAN.gz存在
+if [ -e ${lv3d2}/OPERATIONPLAN.gz ];then
+    ##ファイルバックアップ
+	
+	if [ $(zcat ${lv3d2}/OPERATIONPLAN.gz                                      | rowc) != 0 ];then
+		zcat ${lv3d2}/OPERATIONPLAN.gz                                         |
+		substr -c2.1.8                                                         |		
+        fmtfixed -w10 -c1                                                      >${tmp}/operationplan2
+		#テキスト"operationplan2"9列の内容:
+		#1.従業員CD 2.年月日 3.出勤計画時間 4.退勤計画時間 5.稼働時間 
+		#6.休憩時間 7.稼動区分 8.更新日 9.更新担当CD
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルEMPLOYEEBASIC.gz存在
+if [ -e ${lv3d1}/EMPLOYEEBASIC.gz ];then
+    ##ファイルバックアップ
+    
+	if [ $(zcat ${lv3d1}/EMPLOYEEBASIC.gz                                      | rowc) != 0 ];then
+		#EMPLOYEEBASIC.gzの第2、3、14、28列を取る
+		zcat ${lv3d1}/EMPLOYEEBASIC.gz                                         |
+		selcol -c2,3 -c14 -c28                                                 | 
+		fmtfixed -w10 -c1                                                      | 
+		ssort -k1                                                              >${tmp}/employeebasic2
+		##テキスト"employeebasic2"4列の内容:
+		#1.従業員コード 2.従業員名称 3.退職区分 4.従業員区分NO
+		
+		#関連表
+		hrjoin -k1 -inull ${tmp}/employeebasic2 ${tmp}/operationplan2          | 
+        selcol -c1 -c5 -c2,4 -c6,12                                            >${tmp}/employeebasic2_operationplan2
+		#テキスト"employeebasic2_operationplan2"12列の内容:
+		#1.従業員CD 2.年月日 3.従業員名称 4.退職区分 5.従業員区分NO 
+		#6.出勤計画時間 7.退勤計画時間 8.稼働時間 9.休憩時間 10.稼動区分
+		#11.更新日 12.更新担当CD
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルDAYKINTAI.gz存在
+if [ -e ${lv3d2}/DAYKINTAI.gz ];then
+    ##ファイルバックアップ
+    
+	if [ $(zcat ${lv3d2}/DAYKINTAI.gz                                          | rowc) != 0 ];then
+		zcat ${lv3d2}/DAYKINTAI.gz                                             |
+		substr -c2.1.8                                                         |		
+		fmtfixed -w10 -c1                                                      | 
+		ssort -k1,2                                                            >${tmp}/daykintai2
+		#テキスト"daykintai1"27列の内容:
+		#1.従業員CD 2.日付 3.計画出勤時刻 4.計画退勤時刻 5.計画稼動時間	
+		#6.計画休憩時間 7.実績出勤時刻 8.実績退勤時刻 9.計算出勤時刻 10.計算退勤時刻
+  		#11.実績拘束時間 12.実績休憩時間 13.実績稼動時間 14.実績残業時間 15.実績早朝時間
+		#16.実績深夜時間 17.実績割増時間 18.実績調整手当 19.有給フラグ 20.遅刻フラグ
+		#21.修正フラグ 22.ClockFlg 23.PlanClockKind 24.更新日 25.更新担当CD 
+		#26.initialStampOnTime 27.initialStampOutTime
+		
+		#関連表
+		hrjoin -k1,2 -inull ${tmp}/daykintai2 ${tmp}/employeebasic2_operationplan2 |
+		selrow -e '$29=="0"'                                                   |
+		selrow -e '$30=="1"||$30=="3"'                                         |
+		selrow -e '$2>='${DataBegion}'&&$2<='${DataEnd} 		               |
+		ssort -k1,2                                                            >${tmp}/resultoperationplan 
+		#テキスト"resultoperationplan"37列の内容:
+		#1.従業員CD 2.年月日 3.計画出勤時刻 4.計画退勤時刻 5.計画稼動時間	
+		#6.計画休憩時間 7.実績出勤時刻 8.実績退勤時刻 9.計算出勤時刻 10.計算退勤時刻
+  		#11.実績拘束時間 12.実績休憩時間 13.実績稼動時間 14.実績残業時間 15.実績早朝時間
+		#16.実績深夜時間 17.実績割増時間 18.実績調整手当 19.有給フラグ 20.遅刻フラグ
+		#21.修正フラグ 22.ClockFlg 23.PlanClockKind 24.更新日 25.更新担当CD 
+		#26.initialStampOnTime 27.initialStampOutTime 28.従業員名称 29.退職区分 30.従業員区分NO 
+		#31.出勤計画時間 32.退勤計画時間 33.稼働時間 34.休憩時間 35.稼動区分
+		#36.更新日 37.更新担当CD
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+
+# /////////////////////////////////////////////////////////////////////////
+# 終了処理
+#/////////////////////////////////////////////////////////////////////////
+# 終了時刻の記録
+echo "${HOSTNAME} $(basename $0) ${sday} END $(date +%Y%m%d%H%M%S)" >> ${logd}/UPCNT.${sday}
+touch ${semd}/$(basename $0).${HOSTNAME}.END.${sday}
+
+# 終了
+#rm -rf ${tmp}-* 2>/dev/null
+exit 0
