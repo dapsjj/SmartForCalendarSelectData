@@ -53,7 +53,6 @@ rm -rf ${semd}/$(basename $0)*${sday}
 #判断LV3ファイルOPERATIONPLAN.gz存在
 if [ -e ${lv3d2}/OPERATIONPLAN.gz ];then
     ##ファイルバックアップ
-	
 	if [ $(zcat ${lv3d2}/OPERATIONPLAN.gz                                      | rowc) != 0 ];then
 		zcat ${lv3d2}/OPERATIONPLAN.gz                                         |
 		substr -c2.1.8                                                         |
@@ -92,8 +91,7 @@ fi
 
 #判断LV3ファイルJMSTEMPLOYMENTTYPE.gz存在,社員区分
 if [ -e ${lv3d1}/JMSTEMPLOYMENTTYPE.gz ];then
-    ##ファイルバックアップ
-    
+    ##ファイルバックアップ 
 	if [ $(zcat ${lv3d1}/JMSTEMPLOYMENTTYPE.gz                                 | rowc) != 0 ];then
 		#JMSTEMPLOYMENTTYPE.gzの第1、2列を取る
 		zcat ${lv3d1}/JMSTEMPLOYMENTTYPE.gz                                    | 
@@ -108,7 +106,7 @@ if [ -e ${lv3d1}/JMSTEMPLOYMENTTYPE.gz ];then
 	fi
 else
   ERROR_EXIT
-  
+fi 
   
 #判断TMATTENDANCE存在,稼动区分
 if [ -e ${tempmaster}/TMATTENDANCE ];then    
@@ -132,7 +130,6 @@ fi
 #判断LV3ファイルEMPLOYEEBASIC.gz存在
 if [ -e ${lv3d1}/EMPLOYEEBASIC.gz ];then
     ##ファイルバックアップ
-    
 	if [ $(zcat ${lv3d1}/EMPLOYEEBASIC.gz                                      | rowc) != 0 ];then
 		#EMPLOYEEBASIC.gzの第2、3、14、28列を取る
 		zcat ${lv3d1}/EMPLOYEEBASIC.gz                                         |
@@ -162,7 +159,6 @@ fi
 #判断LV3ファイルDAYKINTAI.gz存在
 if [ -e ${lv3d2}/DAYKINTAI.gz ];then
     ##ファイルバックアップ
-    
 	if [ $(zcat ${lv3d2}/DAYKINTAI.gz                                          | rowc) != 0 ];then
 		zcat ${lv3d2}/DAYKINTAI.gz                                             |
 		substr -c2.1.8                                                         |
@@ -200,7 +196,6 @@ fi
 
 #判断${tmp}-resultoperationplan存在
 if [ -e ${tmp}-resultoperationplan ];then
-    
 	if [ $(cat ${tmp}-resultoperationplan                                          | rowc) != 0 ];then
 		cat ${tmp}-resultoperationplan                                             |
 		fmtfixed -w2 -c29                                                          |
@@ -226,7 +221,6 @@ fi
 
 #判断${tmp}-resultoperationplan-file1存在
 if [ -e ${tmp}-resultoperationplan-file1 ];then
-    
 	if [ $(cat ${tmp}-resultoperationplan-file1                                          | rowc) != 0 ];then
 		cat ${tmp}-resultoperationplan-file1                                             |
 		fmtfixed -w2 -c31                                                                |
@@ -253,7 +247,6 @@ fi
 
 #判断${tmp}-resultoperationplan-file2存在
 if [ -e ${tmp}-resultoperationplan-file2 ];then
-    
 	if [ $(cat ${tmp}-resultoperationplan-file2                                          | rowc) != 0 ];then
 		cat ${tmp}-resultoperationplan-file2                                             |
 		fmtfixed -w2 -c37                                                                |
@@ -315,5 +308,5 @@ echo ${sysflg}_"kentai"_${stime}_.csv
 
 
 # 終了
-rm -Rf ${tmp}-* &>/dev/null
+#rm -Rf ${tmp}-* &>/dev/null
 exit 0
