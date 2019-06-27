@@ -30,6 +30,7 @@ lv3d2=/TORASINNYOU/LV3/KENTAI                    # Level3ディレクトリ2
 paraEmployeeCDList=$1                            # EmployeeCDリスト
 paraStartDate=$2                                 # クエリーの開始日
 paraEndDate=$3                                   # クエリー終了日
+tempmaster=/home/trial/AP/TORASINNYOU/TEMP_MASTER  #tempマスターのパス
 
 downloadPath=/home/trial/AP/TORASINNYOU/DOWNLOAD
 sysflg="TORASINNYOU"
@@ -69,6 +70,65 @@ else
   ERROR_EXIT
 fi
 
+
+#判断RETIREMENTDIVISION存在,退職区分
+if [ -e ${tempmaster}/RETIREMENTDIVISION ];then    
+	if [ $(cat ${tempmaster}/RETIREMENTDIVISION                                | rowc) != 0 ];then
+		#RETIREMENTDIVISIONの第1、2列を取る
+		cat ${tempmaster}/RETIREMENTDIVISION                                   | 
+		selcol -c1,2                                                           | 
+		fmtfixed -w2 -c1                                                       |
+		ssort -k1                                                              >${tmp}-retirementdivision
+		#テキスト"${tmp}-retirementdivision"2列の内容:
+		#1.退職区分CD 2.退職区分名前
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+
+#判断LV3ファイルJMSTEMPLOYMENTTYPE.gz存在,社員区分
+if [ -e ${lv3d1}/JMSTEMPLOYMENTTYPE.gz ];then
+    ##ファイルバックアップ
+    
+	if [ $(zcat ${lv3d1}/JMSTEMPLOYMENTTYPE.gz                                 | rowc) != 0 ];then
+		#JMSTEMPLOYMENTTYPE.gzの第1、2列を取る
+		zcat ${lv3d1}/JMSTEMPLOYMENTTYPE.gz                                    | 
+		selcol -c1,2                                                           | 
+		fmtfixed -w2 -c1                                                       |
+		ssort -k1                                                              >${tmp}-jmstemploymenttype
+		#テキスト"${tmp}-jmstemploymenttype"2列の内容:
+		#1.社員区分番号 2.社員区分名前
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+  
+  
+#判断TMATTENDANCE存在,稼动区分
+if [ -e ${tempmaster}/TMATTENDANCE ];then    
+	if [ $(cat ${tempmaster}/TMATTENDANCE                                      | rowc) != 0 ];then
+		#TMATTENDANCEの第1、2列を取る
+		cat ${tempmaster}/TMATTENDANCE                                         | 
+		selcol -c1,2                                                           | 
+		fmtfixed -w2 -c1                                                       |
+		ssort -k1                                                              >${tmp}-tmattendance
+		#テキスト"${tmp}-tmattendance"2列の内容:
+		#1.稼动区分CD 2.稼动区分名前
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi  
+
+
 #判断LV3ファイルEMPLOYEEBASIC.gz存在
 if [ -e ${lv3d1}/EMPLOYEEBASIC.gz ];then
     ##ファイルバックアップ
@@ -82,7 +142,7 @@ if [ -e ${lv3d1}/EMPLOYEEBASIC.gz ];then
 		fmtfixed -w10 -c1                                                      | 
 		ssort -k1                                                              >${tmp}-employeebasic2
 		##テキスト"${tmp}-employeebasic2"4列の内容:
-		#1.従業員コード 2.従業員名称 3.退職区分 4.従業員区分NO
+		#1.従業員コード 2.従業員名称 3.退職区分 4.従業員区分NO		
 		
 		#関連表
 		hrjoin -k1 -inull ${tmp}-employeebasic2 ${tmp}-operationplan2          | 
@@ -137,6 +197,86 @@ else
   ERROR_EXIT
 fi
 
+
+#判断${tmp}-resultoperationplan存在
+if [ -e ${tmp}-resultoperationplan ];then
+    
+	if [ $(cat ${tmp}-resultoperationplan                                          | rowc) != 0 ];then
+		cat ${tmp}-resultoperationplan                                             |
+		fmtfixed -w2 -c29                                                          |
+		hrjoin -k29 -inull ${tmp}-retirementdivision -                             |
+		ssort -k1,2                                                                >${tmp}-resultoperationplan-file1 		
+		#テキスト"${tmp}-resultoperationplan-file1"38列の内容:
+		#1.従業員CD 2.年月日(日付) 3.計画出勤時刻 4.計画退勤時刻 5.計画稼動時間	
+		#6.計画休憩時間 7.実績出勤時刻 8.実績退勤時刻 9.計算出勤時刻 10.計算退勤時刻
+  		#11.実績拘束時間 12.実績休憩時間 13.実績稼動時間 14.実績残業時間 15.実績早朝時間
+		#16.実績深夜時間 17.実績割増時間 18.実績調整手当 19.有給フラグ 20.遅刻フラグ
+		#21.修正フラグ 22.ClockFlg 23.PlanClockKind 24.更新日 25.更新担当CD 
+		#26.initialStampOnTime 27.initialStampOutTime 28.従業員名称 29.退職区分 30.退職区分名前 
+		#31.従業員区分NO 32.出勤計画時間 33.退勤計画時間 34.稼働時間 35.休憩時間 
+		#36.稼動区分 37.更新日 38.更新担当CD 		
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+
+#判断${tmp}-resultoperationplan-file1存在
+if [ -e ${tmp}-resultoperationplan-file1 ];then
+    
+	if [ $(cat ${tmp}-resultoperationplan-file1                                          | rowc) != 0 ];then
+		cat ${tmp}-resultoperationplan-file1                                             |
+		fmtfixed -w2 -c31                                                                |
+		hrjoin -k31 -inull ${tmp}-jmstemploymenttype -                                   |
+		ssort -k1,2                                                                      >${tmp}-resultoperationplan-file2		
+		#テキスト"${tmp}-resultoperationplan-file2"39列の内容:
+		#1.従業員CD 2.年月日(日付) 3.計画出勤時刻 4.計画退勤時刻 5.計画稼動時間	
+		#6.計画休憩時間 7.実績出勤時刻 8.実績退勤時刻 9.計算出勤時刻 10.計算退勤時刻
+  		#11.実績拘束時間 12.実績休憩時間 13.実績稼動時間 14.実績残業時間 15.実績早朝時間
+		#16.実績深夜時間 17.実績割増時間 18.実績調整手当 19.有給フラグ 20.遅刻フラグ
+		#21.修正フラグ 22.ClockFlg 23.PlanClockKind 24.更新日 25.更新担当CD 
+		#26.initialStampOnTime 27.initialStampOutTime 28.従業員名称 29.退職区分 30.退職区分名前 
+		#31.従業員区分NO 32.従業員区分名前 33.出勤計画時間 34.退勤計画時間 35.稼働時間 
+		#36.休憩時間 37.稼動区分 38.更新日 39.更新担当CD 		
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+
+
+#判断${tmp}-resultoperationplan-file2存在
+if [ -e ${tmp}-resultoperationplan-file2 ];then
+    
+	if [ $(cat ${tmp}-resultoperationplan-file2                                          | rowc) != 0 ];then
+		cat ${tmp}-resultoperationplan-file2                                             |
+		fmtfixed -w2 -c37                                                                |
+		hrjoin -k37 -inull ${tmp}-tmattendance -                                         |
+		ssort -k1,2                                                                      >${tmp}-resultoperationplan-file3		
+		#テキスト"${tmp}-resultoperationplan-file2"40列の内容:
+		#1.従業員CD 2.年月日(日付) 3.計画出勤時刻 4.計画退勤時刻 5.計画稼動時間	
+		#6.計画休憩時間 7.実績出勤時刻 8.実績退勤時刻 9.計算出勤時刻 10.計算退勤時刻
+  		#11.実績拘束時間 12.実績休憩時間 13.実績稼動時間 14.実績残業時間 15.実績早朝時間
+		#16.実績深夜時間 17.実績割増時間 18.実績調整手当 19.有給フラグ 20.遅刻フラグ
+		#21.修正フラグ 22.ClockFlg 23.PlanClockKind 24.更新日 25.更新担当CD 
+		#26.initialStampOnTime 27.initialStampOutTime 28.従業員名称 29.退職区分 30.退職区分名前 
+		#31.従業員区分NO 32.従業員区分名前 33.出勤計画時間 34.退勤計画時間 35.稼働時間 
+		#36.休憩時間 37.稼動区分 38.稼动区分名前 39.更新日 40.更新担当CD 		
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+	else
+		ERROR_EXIT
+	fi
+else
+  ERROR_EXIT
+fi
+
+
 #関連表
 echo ${paraEmployeeCDList}                                                     |
 sed 's/\,/ /g'                                                                 | 
@@ -147,22 +287,26 @@ ssort -k1                                                                      >
 #テキスト"${tmp}-EmployeeCDList"1列の内容:                                          
 #1.従業員CD                                                                     
 																	           
-cat ${tmp}-resultoperationplan                                                 |
+cat ${tmp}-resultoperationplan-file3	                                       |
 fmtfixed -w10 -c1                                                              |
-hejoin -k1 ${tmp}-EmployeeCDList -                                             >${tmp}-result 
-#テキスト"${tmp}-result"37列の内容:
+hejoin -k1 ${tmp}-EmployeeCDList -                                             |
+#テキスト"${tmp}-result"列の内容:
+#テキスト"${tmp}-resultoperationplan-file2"40列の内容:
 #1.従業員CD 2.年月日(日付) 3.計画出勤時刻 4.計画退勤時刻 5.計画稼動時間	
 #6.計画休憩時間 7.実績出勤時刻 8.実績退勤時刻 9.計算出勤時刻 10.計算退勤時刻
 #11.実績拘束時間 12.実績休憩時間 13.実績稼動時間 14.実績残業時間 15.実績早朝時間
 #16.実績深夜時間 17.実績割増時間 18.実績調整手当 19.有給フラグ 20.遅刻フラグ
 #21.修正フラグ 22.ClockFlg 23.PlanClockKind 24.更新日 25.更新担当CD 
-#26.initialStampOnTime 27.initialStampOutTime 28.従業員名称 29.退職区分 30.従業員区分NO 
-#31.出勤計画時間 32.退勤計画時間 33.稼働時間 34.休憩時間 35.稼動区分
-#36.更新日 37.更新担当CD
+#26.initialStampOnTime 27.initialStampOutTime 28.従業員名称 29.退職区分 30.退職区分名前 
+#31.従業員区分NO 32.従業員区分名前 33.出勤計画時間 34.退勤計画時間 35.稼働時間 
+#36.休憩時間 37.稼動区分 38.稼动区分名前 39.更新日 40.更新担当CD 
+
+selcol -c1 -c28 -c29,30 -c31,32 -c2 -c37,38 -c33,34 -c26,27 -c7,10 -c14 -c39,40 >${tmp}-result 
+
 
 #CSVの作成
 cd ${downloadPath}
-cat ${tmp}-result|cat <(echo '従業員CD 年月日(日付) 計画出勤時刻 計画退勤時刻 計画稼動時間 計画休憩時間 実績出勤時刻 実績退勤時刻 計算出勤時刻 計算退勤時刻 実績拘束時間 実績休憩時間 実績稼動時間 実績残業時間 実績早朝時間 実績深夜時間 実績割増時間 実績調整手当 有給フラグ 遅刻フラグ 修正フラグ ClockFlg PlanClockKind 更新日 更新担当CD initialStampOnTime initialStampOutTime 従業員名称 退職区分 従業員区分NO 出勤計画時間 退勤計画時間 稼働時間 休憩時間 稼動区分 更新日 更新担当CD') - | 
+cat ${tmp}-result|cat <(echo '従業員CD 従業員名称 退職区分 退職区分名前 従業員区分 従業員区分名前 年月日 稼動区分 稼动区分名前 出勤計画時間 退勤計画時間 initialStampOnTime initialStampOutTime 実績出勤時刻 実績退勤時刻 計算出勤時刻 計算退勤時刻 実績残業時間 更新日 更新担当CD') - | 
 sed 's/,/_/g'  |sed 's/ /,/g'  > ${sysflg}_"kentai"_${stime}_.csv  		
 [ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
 
@@ -171,5 +315,5 @@ echo ${sysflg}_"kentai"_${stime}_.csv
 
 
 # 終了
-#rm -Rf ${tmp}-* &>/dev/null
+rm -Rf ${tmp}-* &>/dev/null
 exit 0
