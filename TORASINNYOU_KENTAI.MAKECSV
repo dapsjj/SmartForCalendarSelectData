@@ -50,12 +50,25 @@ rm -rf ${semd}/$(basename $0)*${sday}
 # 処理部分
 #/////////////////////////////////////////////////////////////////////////
 
+
+echo ${paraEmployeeCDList}                                                     |
+sed 's/\,/ /g'                                                                 | 
+tov                                                                            |
+fmtfixed -w10 -c1                                                              |
+ssort -k1                                                                      >${tmp}-EmployeeCDList 
+#","を" "に置き換える                                                               
+#テキスト"${tmp}-EmployeeCDList"1列の内容:                                          
+#1.従業員CD 
+
+
 #判断LV3ファイルOPERATIONPLAN.gz存在
 if [ -e ${lv3d2}/OPERATIONPLAN.gz ];then
 		zcat ${lv3d2}/OPERATIONPLAN.gz                                         |
 		substr -c2.1.8                                                         |
 		selrow -e '$2>='${paraStartDate}'&&$2<='${paraEndDate}                 |
-        fmtfixed -w10 -c1                                                      >${tmp}-operationplan2
+        fmtfixed -w10 -c1                                                      |
+		hejoin -k1 ${tmp}-EmployeeCDList -                                     |
+		ssort -k1                                                              >${tmp}-operationplan2
 		#テキスト"${tmp}-operationplan2"9列の内容:
 		#1.従業員CD 2.年月日(日付) 3.出勤計画時間 4.退勤計画時間 5.稼働時間 
 		#6.休憩時間 7.稼動区分 8.更新日 9.更新担当CD 
@@ -140,7 +153,8 @@ if [ -e ${lv3d2}/DAYKINTAI.gz ];then
 		zcat ${lv3d2}/DAYKINTAI.gz                                             |
 		substr -c2.1.8                                                         |
 		selrow -e '$2>='${paraStartDate}'&&$2<='${paraEndDate}                 |
-		fmtfixed -w10 -c1                                                      | 
+		fmtfixed -w10 -c1                                                      |
+		hejoin -k1 ${tmp}-EmployeeCDList - 		                               |
 		ssort -k1,2                                                            >${tmp}-daykintai2
 		#テキスト"${tmp}-daykintai2"27列の内容:
 		#1.従業員CD 2.日付 3.計画出勤時刻 4.計画退勤時刻 5.計画稼動時間	
@@ -232,15 +246,7 @@ else
 fi
 
 
-#関連表
-echo ${paraEmployeeCDList}                                                     |
-sed 's/\,/ /g'                                                                 | 
-tov                                                                            |
-fmtfixed -w10 -c1                                                              |
-ssort -k1                                                                      >${tmp}-EmployeeCDList 
-#","を" "に置き換える                                                               
-#テキスト"${tmp}-EmployeeCDList"1列の内容:                                          
-#1.従業員CD                                                                     
+                                                                    
 																	           
 cat ${tmp}-resultoperationplan-file3	                                       |
 fmtfixed -w10 -c1                                                              |
