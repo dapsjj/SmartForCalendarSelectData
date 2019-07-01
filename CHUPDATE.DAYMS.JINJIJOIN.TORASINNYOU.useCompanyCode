@@ -54,8 +54,6 @@ touch ${semd}/$(basename $0).${HOSTNAME}.START.${sday}
 
 #判断LV3ファイルJMSTEMPLOYMENTTYPE.gz存在
 if [ -e ${lv3d1}/JMSTEMPLOYMENTTYPE.gz ];then
-    
-	if [ $(zcat ${lv3d1}/JMSTEMPLOYMENTTYPE.gz                                 | rowc) != 0 ];then
 		#JMSTEMPLOYMENTTYPE.gzの第1、2列を取る
 		zcat ${lv3d1}/JMSTEMPLOYMENTTYPE.gz                                    | 
 		selcol -c1,2                                                           | 
@@ -64,17 +62,12 @@ if [ -e ${lv3d1}/JMSTEMPLOYMENTTYPE.gz ];then
 		#テキスト"${tmp}-jmstemploymenttype"2列の内容:
 		#1.社員区分番号 2.社員区分名前
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
 
 #判断LV3ファイルEMPLOYEEBASIC.gz存在
-if [ -e ${lv3d1}/EMPLOYEEBASIC.gz ];then
-    
-	if [ $(zcat ${lv3d1}/EMPLOYEEBASIC.gz                                      | rowc) != 0 ];then
+if [ -e ${lv3d1}/EMPLOYEEBASIC.gz ];then 
 		#EMPLOYEEBASIC.gzの第1、2、3、28、8、9、12、11、19、18、24、76、14、10列を取る
 		zcat ${lv3d1}/EMPLOYEEBASIC.gz                                         | 
 		selcol -c1,3 -c28 -c8,9 -c12 -c11 -c19 -c18 -c24 -c76 -c14 -c10        | 
@@ -123,17 +116,12 @@ if [ -e ${lv3d1}/EMPLOYEEBASIC.gz ];then
 		#6.年齢 7.社歴（グループ） 8.社歴(年)※GP入社日 9.所属会社コード 10.職位
 		#11.役職NO 12.採用区分 13.入社日（グループ） 14.入社日（トライアル） 15.生年月日(生年)
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
 
 #判断LV3ファイルATTRIBUTE.gz存在
 if [ -e ${lv3d1}/ATTRIBUTE.gz ];then
-    
-	if [ $(zcat ${lv3d1}/ATTRIBUTE.gz                                          | rowc) != 0 ];then
 		#ATTRIBUTE.gzの第1、2、3、4、5、6、7、8、21、37、16、14列を取る
 		zcat ${lv3d1}/ATTRIBUTE.gz                                             | 
 		selcol -c1,8 -c21 -c37 -c16 -c14                                       | 
@@ -143,17 +131,12 @@ if [ -e ${lv3d1}/ATTRIBUTE.gz ];then
 		#6.エリアNO 7.店舗NO 8.担当商品 9.予備項目２(世代GP) 10.給与ステージ 
 		#11.職位等級 12.配転区分NO
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
 
 #判断LV3ファイルHIERARCHYCLASS.gz存在
 if [ -e ${lv3d2}/HIERARCHYCLASS.gz ];then
-    
-	if [ $(zcat ${lv3d2}/HIERARCHYCLASS.gz                                     | rowc) != 0 ];then
 		#HIERARCHYCLASS.gzの第1、2、3、4、5、6、7、8列を取る
 		zcat ${lv3d2}/HIERARCHYCLASS.gz                                        | 
 		selcol -c1,8                                                           |
@@ -184,17 +167,12 @@ if [ -e ${lv3d2}/HIERARCHYCLASS.gz ];then
 		#21.職位 22.役職NO 23.採用区分 24.入社日（グループ） 25.入社日（トライアル）
 		#26.生年月日(生年)
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
 
 #判断LV3ファイルORGANIZATIONALL.gz存在
 if [ -e ${lv3d1}/ORGANIZATIONALL.gz ];then
-    
-	if [ $(zcat ${lv3d1}/ORGANIZATIONALL.gz                                    | rowc) != 0 ];then
 		#ORGANIZATIONALL.gzの第1、4、7、10、13、16、2、5、8、11、14、17列を取る
 		zcat ${lv3d1}/ORGANIZATIONALL.gz                                       | 
 		selcol -c1 -c4 -c7 -c10 -c13 -c16 -c2 -c5 -c8 -c11 -c14 -c17           | 
@@ -218,17 +196,12 @@ if [ -e ${lv3d1}/ORGANIZATIONALL.gz ];then
 		#26.所属会社コード 27.職位 28.役職NO 29.採用区分 30.入社日（グループ）
 		#31.入社日（トライアル） 32.生年月日(生年)				
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
 
 #判断LV3ファイルCAREEOTHERCOMPANY.gz存在
 if [ -e ${lv3d}/CAREEOTHERCOMPANY.gz ];then
-
-	if [ $(zcat ${lv3d}/CAREEOTHERCOMPANY.gz                                   | rowc) != 0 ];then
 		#CAREEOTHERCOMPANY.gzの第1、3、2列を取ります
 		zcat ${lv3d}/CAREEOTHERCOMPANY.gz                                      | 
 		selcol -c1 -c3 -c2                                                     |		
@@ -260,17 +233,12 @@ if [ -e ${lv3d}/CAREEOTHERCOMPANY.gz ];then
 		#26.社歴(年)※GP入社日 27.職位 28.役職NO 29.採用区分 30.入社日（グループ）
 		#31.入社日（トライアル） 32.生年月日(生年)
         [ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
 
 #判断LV3ファイルMSTSALARYSTAGE.gz存在
 if [ -e ${lv3d1}/MSTSALARYSTAGE.gz ];then
-    
-	if [ $(zcat ${lv3d1}/MSTSALARYSTAGE.gz                                     | rowc) != 0 ];then
 		#MSTSALARYSTAGE.gzの第1、2列を取る
 		zcat ${lv3d1}/MSTSALARYSTAGE.gz                                        | 
 		selcol -c1,2                                                           | 
@@ -279,17 +247,12 @@ if [ -e ${lv3d1}/MSTSALARYSTAGE.gz ];then
 		#テキスト"${tmp}-mstsalarystage"2列の内容:
 		#1.給与ステージコード 2.給与ステージ
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
 
 #判断LV3ファイルMSTGPGRADE.gz存在
 if [ -e ${lv3d1}/MSTGPGRADE.gz ];then
-    
-	if [ $(zcat ${lv3d1}/MSTGPGRADE.gz                                         | rowc) != 0 ];then
 		#MSTGPGRADE.gzの第1、2列を取る
 		zcat ${lv3d1}/MSTGPGRADE.gz                                            | 
 		selcol -c1,2                                                           | 
@@ -298,17 +261,12 @@ if [ -e ${lv3d1}/MSTGPGRADE.gz ];then
 		#テキスト"${tmp}-mstgpgrade"2列の内容:
 		#1.基本等級コード 2.基本等級
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
 
 #判断LV3ファイルJMSTEMPIOYEETYPE.gz存在
 if [ -e ${lv3d1}/JMSTEMPIOYEETYPE.gz ];then
-    
-	if [ $(zcat ${lv3d1}/JMSTEMPIOYEETYPE.gz                                   | rowc) != 0 ];then
 		#JMSTEMPIOYEETYPE.gzの第1、2列を取る
 		zcat ${lv3d1}/JMSTEMPIOYEETYPE.gz                                      | 
 		selcol -c1,2                                                           | 
@@ -458,17 +416,12 @@ if [ -e ${lv3d1}/JMSTEMPIOYEETYPE.gz ];then
 		#31.性別 32.年齢 33.社歴（グループ） 34.社歴(年)※GP入社日 35.職位 
 		#36.役職NO 37.採用区分 38.入社日（グループ） 39.入社日（トライアル） 40.生年月日(生年)
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
 
 #判断LV3ファイルJMSTPOSITION.gz存在
 if [ -e ${lv3d1}/JMSTPOSITION.gz ];then
-    
-	if [ $(zcat ${lv3d1}/JMSTPOSITION.gz                                       | rowc) != 0 ];then
 		#JMSTPOSITION.gzの第1、2列を取る
 		zcat ${lv3d1}/JMSTPOSITION.gz                                          | 
 		selcol -c1,2                                                           | 
@@ -490,11 +443,7 @@ if [ -e ${lv3d1}/JMSTPOSITION.gz ];then
 		#36.役職NO 37.役職名前 38.採用区分 39.入社日（グループ） 40.入社日（トライアル）
 		#41.生年月日(生年)
 		
-
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
@@ -502,10 +451,16 @@ fi
 cat ${tmp}-result                             |
 #selrow -e ""                                  |
 selcol -c1 -c3 -c2 -c26 -c29,32 -c27 -c34 -c12,16 -c11 -c17,18 -c35 -c37,38 -c5 -c21 -c23 -c28 -c25 -c39,41 -c4   |
+#1.年代GP 2.世代GP 3.社歴GP（グループ入社微を基準として設定） 4.従業員コード 5.従業員名称
+#6.社員区分名前 7.性別 8.年齢 9.社歴 10.社歴(年)※GP入社日 
+#11.Company_name(会社) 12.Belong1Name(本部) 13.Belong2Name(支社・支店(部)) 14.Belong3Name(支店・課) 15.AreaName(エリア)
+#16.店舗NO(店舗CD) 17.StoreName(店舗) 18.担当商品名 19.職位 20.役職 
+#21.採用区分 22.TRIAL何社目 23.給与ステージ 24.基本等級 25.基本等級2 
+#26.働き方 27.入社日（グループ） 28.入社日（トライアル） 29.生年月日(生年) 30.従業員管理ID
 
 #人事CSVの生成
 cat <(echo '年代GP 世代GP 社歴GP（グループ入社微を基準として設定） 従業員コード 従業員名称 社員区分名前 性別 年齢 社歴 社歴(年)※GP入社日 Company_name(会社) Belong1Name(本部) Belong2Name(支社・支店(部)) Belong3Name(支店・課) AreaName(エリア) 店舗NO(店舗CD) StoreName(店舗) 担当商品名 職位 役職 採用区分 TRIAL何社目 給与ステージ 基本等級 基本等級2 働き方 入社日（グループ） 入社日（トライアル） 生年月日(生年) 従業員管理ID') - |  
-tr ' ' ','                                                             >jinji.csv
+nkf -sxLw|tr ' ' ','                                                             >jinji.csv
 
 # /////////////////////////////////////////////////////////////////////////
 # 終了処理
@@ -515,5 +470,5 @@ echo "${HOSTNAME} $(basename $0) ${sday} END $(date +%Y%m%d%H%M%S)" >> ${logd}/U
 touch ${semd}/$(basename $0).${HOSTNAME}.END.${sday}
 
 # 終了
-#rm -rf ${tmp}-* 2>/dev/null
+rm -rf ${tmp}-* 2>/dev/null
 exit 0
