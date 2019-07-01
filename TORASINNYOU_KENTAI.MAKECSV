@@ -52,8 +52,6 @@ rm -rf ${semd}/$(basename $0)*${sday}
 
 #判断LV3ファイルOPERATIONPLAN.gz存在
 if [ -e ${lv3d2}/OPERATIONPLAN.gz ];then
-    ##ファイルバックアップ
-	if [ $(zcat ${lv3d2}/OPERATIONPLAN.gz                                      | rowc) != 0 ];then
 		zcat ${lv3d2}/OPERATIONPLAN.gz                                         |
 		substr -c2.1.8                                                         |
 		selrow -e '$2>='${paraStartDate}'&&$2<='${paraEndDate}                 |
@@ -62,9 +60,7 @@ if [ -e ${lv3d2}/OPERATIONPLAN.gz ];then
 		#1.従業員CD 2.年月日(日付) 3.出勤計画時間 4.退勤計画時間 5.稼働時間 
 		#6.休憩時間 7.稼動区分 8.更新日 9.更新担当CD 
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
+
 else
   ERROR_EXIT
 fi
@@ -72,7 +68,6 @@ fi
 
 #判断RETIREMENTDIVISION存在,退職区分
 if [ -e ${tempmaster}/RETIREMENTDIVISION ];then    
-	if [ $(cat ${tempmaster}/RETIREMENTDIVISION                                | rowc) != 0 ];then
 		#RETIREMENTDIVISIONの第1、2列を取る
 		cat ${tempmaster}/RETIREMENTDIVISION                                   | 
 		selcol -c1,2                                                           | 
@@ -81,9 +76,7 @@ if [ -e ${tempmaster}/RETIREMENTDIVISION ];then
 		#テキスト"${tmp}-retirementdivision"2列の内容:
 		#1.退職区分CD 2.退職区分名前
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
+
 else
   ERROR_EXIT
 fi
@@ -91,8 +84,6 @@ fi
 
 #判断LV3ファイルJMSTEMPLOYMENTTYPE.gz存在,社員区分
 if [ -e ${lv3d1}/JMSTEMPLOYMENTTYPE.gz ];then
-    ##ファイルバックアップ 
-	if [ $(zcat ${lv3d1}/JMSTEMPLOYMENTTYPE.gz                                 | rowc) != 0 ];then
 		#JMSTEMPLOYMENTTYPE.gzの第1、2列を取る
 		zcat ${lv3d1}/JMSTEMPLOYMENTTYPE.gz                                    | 
 		selcol -c1,2                                                           | 
@@ -101,16 +92,12 @@ if [ -e ${lv3d1}/JMSTEMPLOYMENTTYPE.gz ];then
 		#テキスト"${tmp}-jmstemploymenttype"2列の内容:
 		#1.社員区分番号 2.社員区分名前
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi 
   
 #判断TMATTENDANCE存在,稼动区分
 if [ -e ${tempmaster}/TMATTENDANCE ];then    
-	if [ $(cat ${tempmaster}/TMATTENDANCE                                      | rowc) != 0 ];then
 		#TMATTENDANCEの第1、2列を取る
 		cat ${tempmaster}/TMATTENDANCE                                         | 
 		selcol -c1,2                                                           | 
@@ -119,9 +106,6 @@ if [ -e ${tempmaster}/TMATTENDANCE ];then
 		#テキスト"${tmp}-tmattendance"2列の内容:
 		#1.稼动区分CD 2.稼动区分名前
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi  
@@ -129,8 +113,6 @@ fi
 
 #判断LV3ファイルEMPLOYEEBASIC.gz存在
 if [ -e ${lv3d1}/EMPLOYEEBASIC.gz ];then
-    ##ファイルバックアップ
-	if [ $(zcat ${lv3d1}/EMPLOYEEBASIC.gz                                      | rowc) != 0 ];then
 		#EMPLOYEEBASIC.gzの第2、3、14、28列を取る
 		zcat ${lv3d1}/EMPLOYEEBASIC.gz                                         |
 		selcol -c2,3 -c14 -c28                                                 |
@@ -149,17 +131,12 @@ if [ -e ${lv3d1}/EMPLOYEEBASIC.gz ];then
 		#6.出勤計画時間 7.退勤計画時間 8.稼働時間 9.休憩時間 10.稼動区分
 		#11.更新日 12.更新担当CD
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
 
 #判断LV3ファイルDAYKINTAI.gz存在
 if [ -e ${lv3d2}/DAYKINTAI.gz ];then
-    ##ファイルバックアップ
-	if [ $(zcat ${lv3d2}/DAYKINTAI.gz                                          | rowc) != 0 ];then
 		zcat ${lv3d2}/DAYKINTAI.gz                                             |
 		substr -c2.1.8                                                         |
 		selrow -e '$2>='${paraStartDate}'&&$2<='${paraEndDate}                 |
@@ -186,17 +163,13 @@ if [ -e ${lv3d2}/DAYKINTAI.gz ];then
 		#31.出勤計画時間 32.退勤計画時間 33.稼働時間 34.休憩時間 35.稼動区分
 		#36.更新日 37.更新担当CD 		
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
 
 
 #判断${tmp}-resultoperationplan存在
-if [ -e ${tmp}-resultoperationplan ];then
-	if [ $(cat ${tmp}-resultoperationplan                                          | rowc) != 0 ];then
+if [ -s ${tmp}-resultoperationplan ];then #-s ファイル長は0ではありません
 		cat ${tmp}-resultoperationplan                                             |
 		fmtfixed -w2 -c29                                                          |
 		hrjoin -k29 -inull ${tmp}-retirementdivision -                             |
@@ -211,17 +184,13 @@ if [ -e ${tmp}-resultoperationplan ];then
 		#31.従業員区分NO 32.出勤計画時間 33.退勤計画時間 34.稼働時間 35.休憩時間 
 		#36.稼動区分 37.更新日 38.更新担当CD 		
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
 
 
 #判断${tmp}-resultoperationplan-file1存在
-if [ -e ${tmp}-resultoperationplan-file1 ];then
-	if [ $(cat ${tmp}-resultoperationplan-file1                                          | rowc) != 0 ];then
+if [ -s ${tmp}-resultoperationplan-file1 ];then  #-s ファイル長は0ではありません
 		cat ${tmp}-resultoperationplan-file1                                             |
 		fmtfixed -w2 -c31                                                                |
 		hrjoin -k31 -inull ${tmp}-jmstemploymenttype -                                   |
@@ -236,9 +205,6 @@ if [ -e ${tmp}-resultoperationplan-file1 ];then
 		#31.従業員区分NO 32.従業員区分名前 33.出勤計画時間 34.退勤計画時間 35.稼働時間 
 		#36.休憩時間 37.稼動区分 38.更新日 39.更新担当CD 		
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
@@ -246,8 +212,7 @@ fi
 
 
 #判断${tmp}-resultoperationplan-file2存在
-if [ -e ${tmp}-resultoperationplan-file2 ];then
-	if [ $(cat ${tmp}-resultoperationplan-file2                                          | rowc) != 0 ];then
+if [ -s ${tmp}-resultoperationplan-file2 ];then  #-s ファイル長は0ではありません
 		cat ${tmp}-resultoperationplan-file2                                             |
 		fmtfixed -w2 -c37                                                                |
 		hrjoin -k37 -inull ${tmp}-tmattendance -                                         |
@@ -262,9 +227,6 @@ if [ -e ${tmp}-resultoperationplan-file2 ];then
 		#31.従業員区分NO 32.従業員区分名前 33.出勤計画時間 34.退勤計画時間 35.稼働時間 
 		#36.休憩時間 37.稼動区分 38.稼动区分名前 39.更新日 40.更新担当CD 		
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
-	else
-		ERROR_EXIT
-	fi
 else
   ERROR_EXIT
 fi
@@ -300,6 +262,7 @@ selcol -c1 -c28 -c29,30 -c31,32 -c2 -c37,38 -c33,34 -c26,27 -c7,10 -c14 -c39,40 
 #CSVの作成
 cd ${downloadPath}
 cat ${tmp}-result|cat <(echo '従業員CD 従業員名称 退職区分 退職区分名前 従業員区分 従業員区分名前 年月日 稼動区分 稼动区分名前 出勤計画時間 退勤計画時間 initialStampOnTime initialStampOutTime 実績出勤時刻 実績退勤時刻 計算出勤時刻 計算退勤時刻 実績残業時間 更新日 更新担当CD') - | 
+nkf -sxLw        |
 sed 's/,/_/g'  |sed 's/ /,/g'  > ${sysflg}_"kentai"_${stime}_.csv  		
 [ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
 
@@ -308,5 +271,5 @@ echo ${sysflg}_"kentai"_${stime}_.csv
 
 
 # 終了
-#rm -Rf ${tmp}-* &>/dev/null
+rm -Rf ${tmp}-* &>/dev/null
 exit 0
