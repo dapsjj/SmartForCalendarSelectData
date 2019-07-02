@@ -481,7 +481,7 @@ fi
 if [ -s ${tmp}-result-1 ];then  
 	if [ ${paraEmployeeCDList} != '0' ];then  #EmployeeCDList!=''
 		cat ${tmp}-result-1                                                                                               |
-	    hejoin -k1 ${tmp}-EmployeeCDList -                                                                                |
+	    hejoin -k26 ${tmp}-EmployeeCDList -                                                                                |
 		selcol -c1 -c3 -c2 -c26 -c29,32 -c27 -c34 -c12,16 -c11 -c17,18 -c35 -c37,38 -c5 -c21 -c23 -c28 -c25 -c39,41 -c4   >${tmp}-result
 		#テキスト"${tmp}-result"30列の内容:
 		#1.年代GP 2.世代GP 3.社歴GP（グループ入社微を基準として設定） 4.従業員コード 5.従業員名称
