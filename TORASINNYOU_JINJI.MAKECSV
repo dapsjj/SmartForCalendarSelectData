@@ -482,8 +482,8 @@ if [ -s ${tmp}-result-1 ];then
 	if [ ${paraEmployeeCDList} != '0' ];then  #EmployeeCDList!=''
 		cat ${tmp}-result-1                                                                                               |
 	    hejoin -k26 ${tmp}-EmployeeCDList -                                                                                |
-		selcol -c1 -c3 -c2 -c26 -c29,32 -c27 -c34 -c12,16 -c11 -c17,18 -c35 -c37,38 -c5 -c21 -c23 -c28 -c25 -c39,41 -c4   >${tmp}-result
-		#テキスト"${tmp}-result"30列の内容:
+		selcol -c1 -c3 -c2 -c26 -c29,32 -c27 -c34 -c12,16 -c11 -c17,18 -c35 -c37,38 -c5 -c21 -c23 -c28 -c25 -c39,41 -c4   >${tmp}-result-2
+		#テキスト"${tmp}-result-2"30列の内容:
 		#1.年代GP 2.世代GP 3.社歴GP（グループ入社微を基準として設定） 4.従業員コード 5.従業員名称
 		#6.社員区分名前 7.性別 8.年齢 9.社歴 10.社歴(年)※GP入社日 
 		#11.Company_name(会社) 12.Belong1Name(本部) 13.Belong2Name(支社・支店(部)) 14.Belong3Name(支店・課) 15.AreaName(エリア)
@@ -502,8 +502,8 @@ if [ -s ${tmp}-result-1 ];then
 				hejoin -k6  ${tmp}-CompanyCode -                                                                             | 			
                 hejoin -k7  ${tmp}-Belong1Code -                                                                             | 								
 				#selrow -e '$6=="'${paraCompanyCode}'"&&$7=="'${paraBelong1Code}'"'                                           |   
-				selcol -c1 -c3 -c2 -c26 -c29,32 -c27 -c34 -c12,16 -c11 -c17,18 -c35 -c37,38 -c5 -c21 -c23 -c28 -c25 -c39,41 -c4   >${tmp}-result
-				#テキスト"${tmp}-result"30列の内容:
+				selcol -c1 -c3 -c2 -c26 -c29,32 -c27 -c34 -c12,16 -c11 -c17,18 -c35 -c37,38 -c5 -c21 -c23 -c28 -c25 -c39,41 -c4   >${tmp}-result-2
+				#テキスト"${tmp}-result-2"30列の内容:
 				#1.年代GP 2.世代GP 3.社歴GP（グループ入社微を基準として設定） 4.従業員コード 5.従業員名称
 				#6.社員区分名前 7.性別 8.年齢 9.社歴 10.社歴(年)※GP入社日 
 				#11.Company_name(会社) 12.Belong1Name(本部) 13.Belong2Name(支社・支店(部)) 14.Belong3Name(支店・課) 15.AreaName(エリア)
@@ -516,8 +516,8 @@ if [ -s ${tmp}-result-1 ];then
 				fmtfixed -w10 -c6                                                                                            | 	
                 hejoin -k6  ${tmp}-CompanyCode -                                                                             | 							
 				#selrow -e '$6=="'${paraCompanyCode}'"'                                                                       |   
-				selcol -c1 -c3 -c2 -c26 -c29,32 -c27 -c34 -c12,16 -c11 -c17,18 -c35 -c37,38 -c5 -c21 -c23 -c28 -c25 -c39,41 -c4   >${tmp}-result
-				#テキスト"${tmp}-result"30列の内容:
+				selcol -c1 -c3 -c2 -c26 -c29,32 -c27 -c34 -c12,16 -c11 -c17,18 -c35 -c37,38 -c5 -c21 -c23 -c28 -c25 -c39,41 -c4   >${tmp}-result-2
+				#テキスト"${tmp}-result-2"30列の内容:
 				#1.年代GP 2.世代GP 3.社歴GP（グループ入社微を基準として設定） 4.従業員コード 5.従業員名称
 				#6.社員区分名前 7.性別 8.年齢 9.社歴 10.社歴(年)※GP入社日 
 				#11.Company_name(会社) 12.Belong1Name(本部) 13.Belong2Name(支社・支店(部)) 14.Belong3Name(支店・課) 15.AreaName(エリア)
@@ -530,10 +530,24 @@ if [ -s ${tmp}-result-1 ];then
 	fi		
 fi
 
+if [ -s ${tmp}-result-2 ];then 
+	cat ${tmp}-result-2                                                                 |
+	awk '{if($7==1){print $0,"男"}else{print $0,"女"}}'                                  |
+	selcol -c1,6 -c31 -c8,30                                                            >${tmp}-result
+	#テキスト"${tmp}-result"30列の内容:
+	#1.年代GP 2.世代GP 3.社歴GP（グループ入社微を基準として設定） 4.従業員コード 5.従業員名称
+	#6.社員区分名前 7.性別 8.年齢 9.社歴 10.社歴(年)※GP入社日 
+	#11.Company_name(会社) 12.Belong1Name(本部) 13.Belong2Name(支社・支店(部)) 14.Belong3Name(支店・課) 15.AreaName(エリア)
+	#16.店舗NO(店舗CD) 17.StoreName(店舗) 18.担当商品名 19.職位 20.役職 
+	#21.採用区分 22.TRIAL何社目 23.給与ステージ 24.基本等級 25.基本等級2 
+	#26.働き方 27.入社日（グループ） 28.入社日（トライアル） 29.生年月日(生年) 30.従業員管理ID
+	[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+fi
+
 
 #CSVの作成
 cd ${downloadPath}
-cat ${tmp}-result|cat <(echo '年代GP 世代GP 社歴GP（グループ入社微を基準として設定） 従業員コード 従業員名称 社員区分名前 性別 年齢 社歴 社歴(年)※GP入社日 Company_name(会社) Belong1Name(本部) Belong2Name(支社・支店(部)) Belong3Name(支店・課) AreaName(エリア) 店舗NO(店舗CD) StoreName(店舗) 担当商品名 職位 役職 採用区分 TRIAL何社目 給与ステージ 基本等級 基本等級2 働き方 入社日（グループ） 入社日（トライアル） 生年月日(生年) 従業員管理ID') - | 
+cat ${tmp}-result|cat <(echo '年代GP 世代GP 社歴GP（グループ入社微を基準として設定） 従業員コード 従業員名称 社員区分名前 性別 年齢 社歴 社歴(年)※GP入社日 Company_name(会社) Belong1Name(本部) Belong2Name(支社・支店(部)) Belong3Name(支店・課) AreaName(エリア) 店舗NO(店舗CD) StoreName(店舗) 担当商品名 職位 役職 採用区分 TRIAL何社目 給与ステージ 基本等級 基本等級2 働き方 入社日（グループ） 入社日（トライアル） 生年 従業員管理ID') - | 
 nkf -sxLw        |
 sed 's/,/_/g'  |sed 's/ /,/g'  > ${sysflg}_"jinji"_${stime}_.csv  		
 [ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
