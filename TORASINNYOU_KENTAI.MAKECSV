@@ -1,7 +1,7 @@
 #!/bin/bash -xv
 #
 # TORASINNYOU_KENTAI.MAKECSV>> 勤怠データ生成
-# Usage : TORASINNYOU_KENTAI.MAKECSV '10128204,10109664' '20190521' '20190620'
+# Usage : TORASINNYOU_KENTAI.MAKECSV '10128204,10109664' '20190521' '20190530'
 #
 # Written by song.jiajun /Date : 20190625
 # Modified by song.jiajun /Date : 20190625
@@ -251,8 +251,7 @@ fi
 cat ${tmp}-resultoperationplan-file3	                                       |
 fmtfixed -w10 -c1                                                              |
 hejoin -k1 ${tmp}-EmployeeCDList -                                             |
-#テキスト"${tmp}-result"列の内容:
-#テキスト"${tmp}-resultoperationplan-file2"40列の内容:
+#テキスト"${tmp}-resultoperationplan-file3"40列の内容:
 #1.従業員CD 2.年月日(日付) 3.計画出勤時刻 4.計画退勤時刻 5.計画稼動時間	
 #6.計画休憩時間 7.実績出勤時刻 8.実績退勤時刻 9.計算出勤時刻 10.計算退勤時刻
 #11.実績拘束時間 12.実績休憩時間 13.実績稼動時間 14.実績残業時間 15.実績早朝時間
@@ -263,7 +262,12 @@ hejoin -k1 ${tmp}-EmployeeCDList -                                             |
 #36.休憩時間 37.稼動区分 38.稼动区分名前 39.更新日 40.更新担当CD 
 
 selcol -c1 -c28 -c29,30 -c31,32 -c2 -c37,38 -c33,34 -c26,27 -c7,10 -c14 -c39,40 >${tmp}-result 
-
+#テキスト"${tmp}-resultoperationplan-file3"20列の内容:
+#1.従業員CD 2.従業員名称 3.退職区分 4.退職区分名前 5.従業員区分
+#6.従業員区分名前 7.年月日 8.稼動区分 9.稼动区分名前 10.出勤計画時間
+#11.退勤計画時間 12.initialStampOnTime 13.initialStampOutTime 14.実績出勤時刻 15.実績退勤時刻
+#16.計算出勤時刻 17.計算退勤時刻 18.実績残業時間 19.更新日 20.更新担当CD
+[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
 
 #CSVの作成
 cd ${downloadPath}
