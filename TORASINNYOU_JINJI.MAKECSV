@@ -171,9 +171,8 @@ if [ -e ${lv3d1}/ATTRIBUTE.gz ];then
 		#ATTRIBUTE.gzの第1、10列を取る
 		zcat ${lv3d1}/ATTRIBUTE.gz                                             | 
 		selcol -c1 -c10                                                        | 
-		fmtfixed -w10 -c1                                                      |
-		fmtfixed -w3 -c2                                                       >${tmp}-attribute-for-official-position
-		#テキスト"${tmp}-${tmp}-attribute-for-official-position"2列の内容:
+		fmtfixed -w10 -c1,2                                                    >${tmp}-attribute-for-official-position
+		#テキスト"${tmp}-attribute-for-official-position"2列の内容:
 		#1.EmployeeManagementID 2.役職NO
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
 else
@@ -450,9 +449,17 @@ if [ -e ${lv3d1}/JMSTEMPIOYEETYPE.gz ];then
 		#関連表
 		hrjoin -k26 ${tmp}-dateformat ${tmp}-workingyears-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3 |
         selcol -c1,26 -c30,40 -c27,29                                           |
-		fmtfixed -w3 -c36                                                       |
+		#1.年代GP 2.社歴GP（グループ入社微を基準として設定） 3.世代GP 4.従業員管理ID 5.TRIAL何社目 
+		#6.所属会社コード 7.管轄NO１ 8.所属・チームNO 9.課・ディビジョンNO 10.エリアNO 
+		#11.店舗NO(店舗CD) 12.Company_name(会社) 13.Belong1Name(本部) 14.Belong2Name(支社・支店(部)) 15.Belong3Name(支店・課)
+		#16.AreaName(エリア) 17.StoreName(店舗) 18.担当商品名 19.予備項目２(世代GP) 20.給与ステージコード 
+		#21.給与ステージ 22.基本等級コード 23.基本等級 24.働き方CD(配転区分NO) 25.働き方(配転区分名前)
+		#26.従業員コード 27.社歴 28.基本等級2 29.従業員名称 30.社員区分名前 
+		#31.性別 32.年齢 33.社歴（グループ） 34.社歴(年)※GP入社日 35.職位 
+		#36.役職NO 37.採用区分 38.入社日（グループ） 39.入社日（トライアル） 40.生年月日(生年)
+		fmtfixed -w10 -c36                                                      |
 		hrjoin -k4 ${tmp}-attribute-for-official-position -                     |
-		selcol -c1,4 -c6,36 -c5 -c38,41                                          >${tmp}-dateformat-workingyears-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3
+		selcol -c1,4 -c6,36 -c5 -c38,41                                         >${tmp}-dateformat-workingyears-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3
 		#テキスト"${tmp}-dateformat-workingyears-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3"40列の内容:
         #1.年代GP 2.社歴GP（グループ入社微を基準として設定） 3.世代GP 4.従業員管理ID 5.TRIAL何社目 
 		#6.所属会社コード 7.管轄NO１ 8.所属・チームNO 9.課・ディビジョンNO 10.エリアNO 
@@ -467,18 +474,18 @@ else
   ERROR_EXIT
 fi
 
-#判断LV3ファイルJMSTPOSITION.gz存在
-if [ -e ${lv3d1}/JMSTPOSITION.gz ];then
-		#JMSTPOSITION.gzの第1、2列を取る
-		zcat ${lv3d1}/JMSTPOSITION.gz                                          | 
+#判断LV3ファイルPOSITION.gz.gz存在
+if [ -e ${lv3d2}/POSITION.gz ];then
+		#POSITION.gzの第1、2列を取る
+		zcat ${lv3d2}/POSITION.gz                                              | 
 		selcol -c1,2                                                           | 
-		fmtfixed -w3 -c1                                                       |
-		ssort -k1                                                              >${tmp}-jmstposition
-		#テキスト"${tmp}-jmstposition"2列の内容:
+		fmtfixed -w10 -c1                                                      |
+		ssort -k1                                                              >${tmp}-mstposition
+		#テキスト"${tmp}-mstposition"2列の内容:
 		#1.役職NO 2.役職名前
 		
 		#関連表
-		hrjoin -k36 ${tmp}-jmstposition ${tmp}-dateformat-workingyears-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3  >${tmp}-result-1
+		hrjoin -k36 -inull ${tmp}-mstposition ${tmp}-dateformat-workingyears-gpgradetwo-jmstemployeetype-mstgpgrade-mstsalarystage-careeothercompany-organizationall-hierarchyclass-attribute-jmstemploymenttype-employeebasic3  >${tmp}-result-1
 		#テキスト"${tmp}-result-1"41列の内容:
         #1.年代GP 2.社歴GP（グループ入社微を基準として設定） 3.世代GP 4.従業員管理ID 5.TRIAL何社目 
 		#6.所属会社コード 7.管轄NO１ 8.所属・チームNO 9.課・ディビジョンNO 10.エリアNO 
