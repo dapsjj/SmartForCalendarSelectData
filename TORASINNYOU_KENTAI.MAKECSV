@@ -162,7 +162,7 @@ if [ -e ${lv3d2}/DAYKINTAI.gz ];then
   		#11.実績拘束時間 12.実績休憩時間 13.実績稼動時間 14.実績残業時間 15.実績早朝時間
 		#16.実績深夜時間 17.実績割増時間 18.実績調整手当 19.有給フラグ 20.遅刻フラグ
 		#21.修正フラグ 22.ClockFlg 23.PlanClockKind 24.更新日 25.更新担当CD 
-		#26.initialStampOnTime 27.initialStampOutTime
+		#26.initialStampOnTime(実出勤打刻時間) 27.initialStampOutTime(実退勤打刻時間)
 		
 		#関連表
 		hrjoin -k1,2 -inull ${tmp}-daykintai2 ${tmp}-employeebasic2-operationplan2 |
@@ -173,7 +173,7 @@ if [ -e ${lv3d2}/DAYKINTAI.gz ];then
   		#11.実績拘束時間 12.実績休憩時間 13.実績稼動時間 14.実績残業時間 15.実績早朝時間
 		#16.実績深夜時間 17.実績割増時間 18.実績調整手当 19.有給フラグ 20.遅刻フラグ
 		#21.修正フラグ 22.ClockFlg 23.PlanClockKind 24.更新日 25.更新担当CD 
-		#26.initialStampOnTime 27.initialStampOutTime 28.従業員名称 29.退職区分 30.従業員区分NO 
+		#26.initialStampOnTime(実出勤打刻時間) 27.initialStampOutTime(実退勤打刻時間) 28.従業員名称 29.退職区分 30.従業員区分NO 
 		#31.出勤計画時間 32.退勤計画時間 33.稼働時間 34.休憩時間 35.稼動区分
 		#36.更新日 37.更新担当CD 		
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
@@ -194,7 +194,7 @@ if [ -s ${tmp}-resultoperationplan ];then #-s ファイル長は0ではありま
   		#11.実績拘束時間 12.実績休憩時間 13.実績稼動時間 14.実績残業時間 15.実績早朝時間
 		#16.実績深夜時間 17.実績割増時間 18.実績調整手当 19.有給フラグ 20.遅刻フラグ
 		#21.修正フラグ 22.ClockFlg 23.PlanClockKind 24.更新日 25.更新担当CD 
-		#26.initialStampOnTime 27.initialStampOutTime 28.従業員名称 29.退職区分 30.退職区分名前 
+		#26.initialStampOnTime(実出勤打刻時間) 27.initialStampOutTime(実退勤打刻時間) 28.従業員名称 29.退職区分 30.退職区分名前 
 		#31.従業員区分NO 32.出勤計画時間 33.退勤計画時間 34.稼働時間 35.休憩時間 
 		#36.稼動区分 37.更新日 38.更新担当CD 		
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
@@ -215,7 +215,7 @@ if [ -s ${tmp}-resultoperationplan-file1 ];then  #-s ファイル長は0では�
   		#11.実績拘束時間 12.実績休憩時間 13.実績稼動時間 14.実績残業時間 15.実績早朝時間
 		#16.実績深夜時間 17.実績割増時間 18.実績調整手当 19.有給フラグ 20.遅刻フラグ
 		#21.修正フラグ 22.ClockFlg 23.PlanClockKind 24.更新日 25.更新担当CD 
-		#26.initialStampOnTime 27.initialStampOutTime 28.従業員名称 29.退職区分 30.退職区分名前 
+		#26.initialStampOnTime(実出勤打刻時間) 27.initialStampOutTime(実退勤打刻時間) 28.従業員名称 29.退職区分 30.退職区分名前 
 		#31.従業員区分NO 32.従業員区分名前 33.出勤計画時間 34.退勤計画時間 35.稼働時間 
 		#36.休憩時間 37.稼動区分 38.更新日 39.更新担当CD 		
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
@@ -237,7 +237,7 @@ if [ -s ${tmp}-resultoperationplan-file2 ];then  #-s ファイル長は0では�
   		#11.実績拘束時間 12.実績休憩時間 13.実績稼動時間 14.実績残業時間 15.実績早朝時間
 		#16.実績深夜時間 17.実績割増時間 18.実績調整手当 19.有給フラグ 20.遅刻フラグ
 		#21.修正フラグ 22.ClockFlg 23.PlanClockKind 24.更新日 25.更新担当CD 
-		#26.initialStampOnTime 27.initialStampOutTime 28.従業員名称 29.退職区分 30.退職区分名前 
+		#26.initialStampOnTime(実出勤打刻時間) 27.initialStampOutTime(実退勤打刻時間) 28.従業員名称 29.退職区分 30.退職区分名前 
 		#31.従業員区分NO 32.従業員区分名前 33.出勤計画時間 34.退勤計画時間 35.稼働時間 
 		#36.休憩時間 37.稼動区分 38.稼动区分名前 39.更新日 40.更新担当CD 		
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
@@ -257,7 +257,7 @@ hejoin -k1 ${tmp}-EmployeeCDList -                                             |
 #11.実績拘束時間 12.実績休憩時間 13.実績稼動時間 14.実績残業時間 15.実績早朝時間
 #16.実績深夜時間 17.実績割増時間 18.実績調整手当 19.有給フラグ 20.遅刻フラグ
 #21.修正フラグ 22.ClockFlg 23.PlanClockKind 24.更新日 25.更新担当CD 
-#26.initialStampOnTime 27.initialStampOutTime 28.従業員名称 29.退職区分 30.退職区分名前 
+#26.initialStampOnTime(実出勤打刻時間) 27.initialStampOutTime(実退勤打刻時間) 28.従業員名称 29.退職区分 30.退職区分名前 
 #31.従業員区分NO 32.従業員区分名前 33.出勤計画時間 34.退勤計画時間 35.稼働時間 
 #36.休憩時間 37.稼動区分 38.稼动区分名前 39.更新日 40.更新担当CD 
 
@@ -265,13 +265,13 @@ selcol -c1 -c28 -c29,30 -c31,32 -c2 -c37,38 -c33,34 -c26,27 -c7,10 -c14 -c39,40 
 #テキスト"${tmp}-resultoperationplan-file3"20列の内容:
 #1.従業員CD 2.従業員名称 3.退職区分 4.退職区分名前 5.従業員区分
 #6.従業員区分名前 7.年月日 8.稼動区分 9.稼动区分名前 10.出勤計画時間
-#11.退勤計画時間 12.initialStampOnTime 13.initialStampOutTime 14.実績出勤時刻 15.実績退勤時刻
+#11.退勤計画時間 12.initialStampOnTime(実出勤打刻時間) 13.initialStampOutTime(実退勤打刻時間) 14.実績出勤時刻 15.実績退勤時刻
 #16.計算出勤時刻 17.計算退勤時刻 18.実績残業時間 19.更新日 20.更新担当CD
 [ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
 
 #CSVの作成
 cd ${downloadPath}
-cat ${tmp}-result|cat <(echo '従業員CD 従業員名称 退職区分 退職区分名前 従業員区分 従業員区分名前 年月日 稼動区分 稼动区分名前 出勤計画時間 退勤計画時間 initialStampOnTime initialStampOutTime 実績出勤時刻 実績退勤時刻 計算出勤時刻 計算退勤時刻 実績残業時間 更新日 更新担当CD') - | 
+cat ${tmp}-result|cat <(echo '従業員CD 従業員名称 退職区分 退職区分名前 従業員区分 従業員区分名前 年月日 稼動区分 稼动区分名前 出勤計画時間 退勤計画時間 実出勤打刻時間 実退勤打刻時間 実績出勤時刻 実績退勤時刻 計算出勤時刻 計算退勤時刻 実績残業時間 更新日 更新担当CD') - | 
 nkf -sxLw        |
 sed 's/,/_/g'  |sed 's/ /,/g'  > ${sysflg}_"kentai"_${stime}_.csv  		
 [ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
