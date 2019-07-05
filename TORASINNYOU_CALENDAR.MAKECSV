@@ -24,6 +24,7 @@ exec 2> ${logd}/LOG.$(basename $0).$(date +%Y%m%d)_$(date +%H%M%S)_$$
 # 変数の定義
 semd=${HOME}/SEMAPHORE
 tmp=/tmp/$$-$(basename $0)_$(date +%Y%m%d)_$(date +%H%M%S)
+#tmp=/home/trial/public_html/TORASINNYOU/tmp
 sday=$(date +%Y%m%d)                             # 日付
 lv3d=/TORASINNYOU/LV3/CALENDAR                   # Level3ディレクトリ
 paraGmailList=$1                                 # gmailリスト
@@ -54,7 +55,7 @@ rm -rf ${semd}/$(basename $0)*${sday}
 if [ -e ${lv3d}/ALLEVENTS.gz ];then
     ##ファイルバックアップ
     
-	echo ${paraGmailList} |sed 's/\,/ /g' | tov >${tmp}-gmailList #","を" "に置き換える
+	echo ${paraGmailList} |sed 's/\,/ /g' | tov |ssort -k1 >${tmp}-gmailList #","を" "に置き換える
 	zcat ${lv3d}/ALLEVENTS.gz | hejoin -k80 ${tmp}-gmailList - |
 	awk '(substr($30,1,10)>="'${startDate}'"&&substr($33,1,10)<="'${endDate}'")||(substr($31,1,10)>="'${startDate}'"&&substr($34,1,10)<="'${endDate}'")' |
 	#1.カレンダーのタイトル 2.イベントの状態 3.イベントのタイトル 4.イベント開始日 5.イベント開始時間 6.イベント終了日 7.イベント終了時間 8.イベントの可視性
@@ -65,8 +66,10 @@ if [ -e ${lv3d}/ALLEVENTS.gz ];then
 	
 	if [ -s ${tmp}-result ] ; then
 	   while read rootSummary status summary startdate starttime enddate endtime visibility; do 
-		 if [ "${starttime}" == "_" ] && [ "${enddate}" == "_" ];then
+		 if [ "${starttime}" == "_" ] && [ "${endtime}" == "_" ];then
+			enddate=${enddate:0:4}${enddate:5:2}${enddate:8:2}
 		    enddate=$(sdate ${enddate}d/-1)
+			enddate=${enddate:0:4}-${enddate:4:2}-${enddate:6:2}
 			echo ${rootSummary} ${status} ${summary} ${startdate} ${starttime} ${enddate} ${endtime} ${visibility} >> ${tmp}-file    
 		 else 
 			#starttime=${starttime:0:10}-${starttime:11:5}
@@ -85,7 +88,8 @@ fi
 
 cd ${downloadPath}
 #cat ${tmp}-file|cat <(echo 'rootSummary status summary startDate startTime endDate endTime visibility') - | 
-cat ${tmp}-file|cat <(echo '事件まとめ 事件状態 事件タイトル 事件開始日 事件開始時間 事件終了日 事件終了時間 事件可視性') - | 
+cat ${tmp}-file|cat <(echo 'アカウント 状態 予定タイトル 開始日 開始日時 終了日 終了日時 プライベートFLG') - | 
+nkf -sxLw      |
 sed 's/,/_/g'  |sed 's/ /,/g'  > ${sysflg}_"calendar"_${stime}_.csv
 [ $(errchk ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
 
@@ -93,5 +97,5 @@ echo ${sysflg}_"calendar"_${stime}_.csv
 [ $(errchk ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
 
 # 終了
-rm -Rf ${tmp}-* &>/dev/null
+#rm -Rf ${tmp}-* &>/dev/null
 exit 0
