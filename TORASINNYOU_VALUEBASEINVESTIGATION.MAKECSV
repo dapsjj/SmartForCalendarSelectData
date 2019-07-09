@@ -1,0 +1,329 @@
+#!/bin/bash -xv
+#
+# TORASINNYOU_VALUEBASEINVESTIGATION.MAKECSV>> 人事データ生成
+# Usage : TORASINNYOU_VALUEBASEINVESTIGATION.MAKECSV '10128204,10109664' '0' '0' or TORASINNYOU_VALUEBASEINVESTIGATION.MAKECSV '0' '201921','0' or TORASINNYOU_VALUEBASEINVESTIGATION.MAKECSV '0' '201921' '201930'  
+#
+# Written by song.jiajun /Date : 20190705
+# Modified by song.jiajun /Date : 20190705
+
+
+#/////////////////////////////////////////////////////////////////////////
+# 初期設定
+#/////////////////////////////////////////////////////////////////////////
+# パスの定義
+export PATH=/home/SMART_TRIAL:/home/SMART:/usr/local/bin:${PATH}
+export LANG=ja_JP.UTF-8
+
+HOME=/home/trial
+logd=${HOME}/AP/TORASINNYOU/LOG                  # ログディレクトリ
+
+# 走行ログの記録
+echo   "${logd}/LOG.$(basename $0).$(date +%Y%m%d)_$(date +%H%M%S)_$$" &> /dev/null
+exec 2> ${logd}/LOG.$(basename $0).$(date +%Y%m%d)_$(date +%H%M%S)_$$
+
+# 変数の定義
+semd=${HOME}/SEMAPHORE
+tmp=/tmp/$$-$(basename $0)_$(date +%Y%m%d)_$(date +%H%M%S)
+sday=$(date +%Y%m%d)                             # 日付
+lv3d=/TORASINNYOU/LV3/VALUEBASEINVESTIGATION     # Level3ディレクトリ
+#paraEmployeeCDList=$1                            # EmployeeCDリスト
+#paraStartDate=$2                                 # クエリーの開始日
+#paraEndDate=$3                                   # クエリー終了日
+
+
+downloadPath=/home/trial/AP/TORASINNYOU/DOWNLOAD
+sysflg="TORASINNYOU"
+stime=$(date +%Y%m%d%H%M%S)_$$
+
+# エラー時の終了処理定義
+ERROR_EXIT(){
+  touch ${semd}/$(basename $0).${HOSTNAME}.ERROR.${sday}
+  exit 1
+}
+
+#SEMAPHORE削除
+rm -rf ${semd}/$(basename $0)*${sday}
+
+
+#/////////////////////////////////////////////////////////////////////////
+# 処理部分
+#/////////////////////////////////////////////////////////////////////////
+
+if [ ${paraEmployeeCDList} != '0' ];then 
+	echo ${paraEmployeeCDList}                                                     |
+	sed 's/\,/ /g'                                                                 | 
+	tov                                                                            |
+	fmtfixed -w10 -c1                                                              |
+	ssort -k1                                                                      >${tmp}-EmployeeCDList 
+	#","を" "に置き換える                                                               
+	#テキスト"${tmp}-EmployeeCDList"1列の内容:                                          
+	#1.従業員CD 
+	[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+fi
+
+
+
+#判断LV3ファイルMDLUSERENROLMENTS.gz存在
+if [ -e ${lv3d}/MDLUSERENROLMENTS.gz ];then
+		#MDLUSERENROLMENTS.gzの第3、4列を取る
+		zcat ${lv3d}/MDLUSERENROLMENTS.gz                                          | 
+		selcol -c3,4                                                               | 
+		fmtfixed -w10 -c1,2                                                        |
+		ssort -k1                                                                  >${tmp}-mdluserenrolments
+		#テキスト"${tmp}-mdluserenrolments"2列の内容:
+		#1.enrolid 2.userid
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+#判断LV3ファイルMDLENROL.gz存在
+if [ -e ${lv3d}/MDLENROL.gz ];then
+		#MDLENROL.gzの第1、4列を取る
+		zcat ${lv3d}/MDLENROL.gz                                                   | 
+		selcol -c1 -c4                                                             | 
+		fmtfixed -w10 -c1,2                                                        |
+		ssort -k1                                                                  >${tmp}-mdlenrol
+		#テキスト"${tmp}-mdlenrol"2列の内容:
+		#1.id 2.courseid
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+#判断LV3ファイルMDLCOURSE.gz存在
+if [ -e ${lv3d}/MDLCOURSE.gz ];then
+		#MDLCOURSE.gzの第1列を取る
+		zcat ${lv3d}/MDLCOURSE.gz                                                  | 
+		selcol -c1                                                                 | 
+		fmtfixed -w10 -c1                                                          |
+		ssort -k1                                                                  >${tmp}-mdlcourse
+		#テキスト"${tmp}-mdlcourse"1列の内容:
+		#1.id 
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+#判断LV3ファイルMDLUSER.gz存在
+if [ -e ${lv3d}/MDLUSER.gz ];then
+		#MDLUSER.gzの第1、5、8、11、12、22、23列を取る
+		zcat ${lv3d}/MDLUSER.gz                                                    | 
+		selcol -c1 -c5 -c8 -c11,12 -c22,23                                         | 
+		fmtfixed -w10 -c1                                                          |
+		fmtfixed -w11 -c7                                                          |
+		ssort -k1                                                                  >${tmp}-mdluser
+		#テキスト"${tmp}-mdluser"7列の内容:
+		#1.id 2.deleted 3.username 4.firstname 5.lastname
+		#6.institution 7.department
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+#判断LV3ファイルMDLUSERINFODATA.gz存在
+if [ -e ${lv3d}/MDLUSERINFODATA.gz ];then
+		#MDLUSERINFODATA.gzの第2、3、4列を取る
+		zcat ${lv3d}/MDLUSERINFODATA.gz                                            | 
+		selcol -c2,4                                                               | 
+		fmtfixed -w10 -c1                                                          |
+		ssort -k1                                                                  >${tmp}-mdluserinfodata
+		#テキスト"${tmp}-mdluserinfodata"3列の内容:
+		#1.userid 2.fieldid 3.data 
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+#判断LV3ファイルMDLQUIZ.gz存在
+if [ -e ${lv3d}/MDLQUIZ.gz ];then
+		#MDLQUIZ.gzの第1、2、3、28列を取る
+		zcat ${lv3d}/MDLQUIZ.gz                                                    | 
+		selcol -c1,3 -c28 -c6,7                                                    | 
+		fmtfixed -w10 -c1,2                                                        |
+		ssort -k1                                                                  >${tmp}-mdlquiz
+		#テキスト"${tmp}-mdlquiz"6列の内容:
+		#1.id 2.course 3.name 4.sumgrades 5.timeopen 6.timeclose
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+#判断LV3ファイルMDLQUIZATTEMPTS.gz存在
+if [ -e ${lv3d}/MDLQUIZATTEMPTS.gz ];then
+		#MDLQUIZATTEMPTS.gzの第2、3、4、11、14列を取る
+		zcat ${lv3d}/MDLQUIZATTEMPTS.gz                                            | 
+		selcol -c2,4 -c11 -c14                                                     | 
+		fmtfixed -w10 -c1,2                                                        |
+		ssort -k1,2                                                                  >${tmp}-mdlquizattempts
+		#テキスト"${tmp}-mdlquizattempts"3列の内容:
+		#1.quiz 2.userid 3.attempt 4.timefinish 5.sumgrades
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+
+
+#判断${tmp}-mdluserenrolments存在
+if [ -s ${tmp}-mdluserenrolments ];then  #-s ファイル長は0ではありません
+		cat ${tmp}-mdluserenrolments                                               |
+		hrjoin -k1 -inull ${tmp}-mdlenrol -                                        |
+		ssort -k1                                                                 >${tmp}-mdlenrol-mdluserenrolments		
+		#テキスト"${tmp}-mdlenrol-mdluserenrolments"3列の内容:
+		#1.mdluserenrolments_enrolid(mdlenrol_id) 2.mdlenrol_courseid 3.mdluserenrolments_userid
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+#判断${tmp}-mdlcourse存在
+if [ -s ${tmp}-mdlcourse ];then  #-s ファイル長は0ではありません
+		cat ${tmp}-mdlenrol-mdluserenrolments                                      |
+		hrjoin -k2 -inull ${tmp}-mdlcourse -                                       |
+		ssort -k2                                                                  >${tmp}-mdlcourse-mdlenrol-mdluserenrolments		
+		#テキスト"${tmp}-mdlcourse-mdlenrol-mdluserenrolments"3列の内容:
+		#1.mdluserenrolments_enrolid(mdlenrol_id) 2.mdlenrol_courseid(mdlcourse_id) 3.mdluserenrolments_userid
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+#判断${tmp}-mdluser存在
+if [ -s ${tmp}-mdluser ];then  #-s ファイル長は0ではありません
+		cat ${tmp}-mdlcourse-mdlenrol-mdluserenrolments                            |
+		hrjoin -k3 -inull ${tmp}-mdluser -                                         |
+		ssort -k3                                                                  >${tmp}-mdluser-mdlcourse-mdlenrol-mdluserenrolments		
+		#テキスト"${tmp}-mdluser-mdlcourse-mdlenrol-mdluserenrolments"9列の内容:
+		#1.mdluserenrolments_enrolid(mdlenrol_id) 2.mdlenrol_courseid(mdlcourse_id) 3.mdluserenrolments_userid(mdluser_id) 4.mdluser_deleted 5.mdluser_username 
+		#6.mdluser_firstname 7.mdluser_lastname 8.mdluser_institution 9.mdluser_department
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+#判断${tmp}-mdluserinfodata存在
+if [ -s ${tmp}-mdluserinfodata ];then  #-s ファイル長は0ではありません
+		cat ${tmp}-mdluser-mdlcourse-mdlenrol-mdluserenrolments                     |
+		hrjoin -k3 -inull ${tmp}-mdluserinfodata -                                  |
+		selrow -e '$4==2'                                                           |
+		ssort -k3                                                                   >${tmp}-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments		
+		#テキスト"${tmp}-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments"11列の内容:
+		#1.mdluserenrolments_enrolid(mdlenrol_id) 2.mdlenrol_courseid(mdlcourse_id) 3.mdluserenrolments_userid(mdluser_id,mdluserinfodata_userid) 4.mdluserinfodata_fieldid 5.mdluserinfodata_data
+		#6.mdluser_deleted 7.mdluser_username 8.mdluser_firstname 9.mdluser_lastname 10.mdluser_institution 
+		#11.mdluser_department
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+#判断${tmp}-mdlquiz存在
+if [ -s ${tmp}-mdlquiz ];then  #-s ファイル長は0ではありません
+		cat ${tmp}-mdlquiz                                                         |
+		selcol -c2 -c1 -c3,4 -c5,6                                                 |
+		ssort -k1                                                                  >${tmp}-mdlquiz-for-course
+		#テキスト"${tmp}-mdlquiz-for-course"6列の内容:
+		#1.course 2.id 3.name 4.sumgrades 5.timeopen 6.timeclose
+		
+		cat ${tmp}-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments    |
+		hrjoin -k2 -inull ${tmp}-mdlquiz-for-course -                              |
+		ssort -k2                                                                  >${tmp}-mdlquiz-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments		
+		#テキスト"${tmp}-mdlquiz-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments"16列の内容:
+		#1.mdluserenrolments_enrolid(mdlenrol_id) 2.mdlenrol_courseid(mdlcourse_id,mdlquiz_course) 3.mdlquiz_id 4.mdlquiz_name 5.mdlquiz_sumgrades
+		#6.mdlquiz_timeopen 7.mdlquiz_timeclose 8.mdluserenrolments_userid(mdluser_id,mdluserinfodata_userid) 9.mdluserinfodata_fieldid 10.mdluserinfodata_data 
+		#11.mdluser_deleted 12.mdluser_username 13.mdluser_firstname 14.mdluser_lastname 15.mdluser_institution
+        #16.mdluser_department
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+#判断${tmp}-mdlquizattempts存在
+if [ -s ${tmp}-mdlquizattempts ];then  #-s ファイル長は0ではありません                                
+		cat ${tmp}-mdlquiz-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments    |
+		selcol -c1,3 -c8 -c4,7 -c9,16                                                      |
+		#1.mdluserenrolments_enrolid(mdlenrol_id) 2.mdlenrol_courseid(mdlcourse_id,mdlquiz_course) 3.mdlquiz_id 4.mdluserenrolments_userid(mdluser_id,mdluserinfodata_userid) 5.mdlquiz_name
+		#6.mdlquiz_sumgrades 7.mdlquiz_timeopen 8.mdlquiz_timeclose 9.mdluserinfodata_fieldid 10.mdluserinfodata_data 
+		#11.mdluser_deleted 12.mdluser_username 13.mdluser_firstname 14.mdluser_lastname 15.mdluser_institution 16.mdluser_department
+		hrjoin -k3,4 -inull ${tmp}-mdlquizattempts -                                       |
+		ssort -k3,4                                                                        |
+		selrow -e '$2=="0000000465"&&$14=="0"&&$6'                                                    >${tmp}-mdlquizattempts-mdlquiz-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments		
+		#テキスト"${tmp}-mdlquizattempts-mdlquiz-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments"19列の内容:
+		#1.mdluserenrolments_enrolid(mdlenrol_id) 2.mdlenrol_courseid(mdlcourse_id,mdlquiz_course) 3.mdlquiz_id 4.mdluserenrolments_userid(mdluser_id,mdluserinfodata_userid) 5.mdlquizattempts_attempt 
+		#6.mdlquizattempts_timefinish 7.mdlquizattempts_sumgrades 8.mdlquiz_name 9.mdlquiz_sumgrades 10.mdlquiz_timeopen 
+		#11.mdlquiz_timeclose 12.mdluserinfodata_fieldid 13.mdluserinfodata_data 14.mdluser_deleted 15.mdluser_username(EmployeeCode) 
+		#16.mdluser_firstname 17.mdluser_lastname 18.mdluser_institution 19.mdluser_department
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+
+#判断${tmp}-mdlquizattempts-mdlquiz-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments存在
+if [ -s ${tmp}-mdlquizattempts-mdlquiz-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments ];then  #-s ファイル長は0ではありません                                
+		cat ${tmp}-mdlquizattempts-mdlquiz-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments       |
+		selcol -c8 -c15 -c10,11 -c9 -c7 -c5,6                                                                 |
+	    ssort -k1,5                                                                                           | tee ${tmp}-file1 |
+		#テキスト"${tmp}-file1"8列の内容:
+		#1.mdlquiz_name 2.mdluser_username(EmployeeCode) 3.mdlquiz_timeopen 4.mdlquiz_timeclose 5.mdlquiz_sumgrades 
+		#6.mdlquizattempts_sumgrades 7.mdlquizattempts_attempt 8.mdlquizattempts_timefinish 
+		groupby -k1,5 -c6.MAX -c7.MAX -c8.MAX                                                                 > ${tmp}-file2
+		#テキスト"${tmp}-file2"8列の内容:
+		#1.mdlquiz_name 2.mdluser_username(EmployeeCode) 3.mdlquiz_timeopen 4.mdlquiz_timeclose 5.mdlquiz_sumgrades 
+		#6.MAX(mdlquizattempts_sumgrades) 7.MAX(mdlquizattempts_attempt) 8.MAX(mdlquizattempts_timefinish)
+		
+		cat ${tmp}-file1                                                                                      |
+		hrjoin -k1,5 ${tmp}-file2 -                                                                           |
+		#1.mdlquiz_name 2.mdluser_username(EmployeeCode) 3.mdlquiz_timeopen 4.mdlquiz_timeclose 5.mdlquiz_sumgrades 
+		#6.MAX(mdlquizattempts_sumgrades) 7.MAX(mdlquizattempts_attempt) 8.MAX(mdlquizattempts_timefinish) 9.mdlquizattempts_sumgrades 10.mdlquizattempts_attempt 
+		#11.mdlquizattempts_timefinish 
+		
+		scalc '$1,$2,$3,$4,$5,$6,$6/$5*100,$7,$8'                                                             > ${tmp}-file3
+		#1.mdlquiz_name 2.mdluser_username(EmployeeCode) 3.mdlquiz_timeopen 4.mdlquiz_timeclose 5.mdlquiz_sumgrades 
+		#6.MAX(mdlquizattempts_sumgrades) 7.MAX(mqa.sumgrades) / mq.sumgrades * 100 8.MAX(mdlquizattempts_attempt) 9.MAX(mdlquizattempts_timefinish)
+		
+		cat ${tmp}-file3                                                                                      |
+		round -tA -c5.1 -c6.1 -c7.0                                                                           > ${tmp}-file4  
+		#1.mdlquiz_name 2.mdluser_username(EmployeeCode) 3.mdlquiz_timeopen 4.mdlquiz_timeclose 5.ROUND(mdlquiz_sumgrades,1)
+		#6.ROUND(MAX(mdlquizattempts_sumgrades),1) 7.ROUND(MAX(mqa.sumgrades) / mq.sumgrades * 100,0) 8.MAX(mdlquizattempts_attempt) 9.MAX(mdlquizattempts_timefinish)
+		
+		cat ${tmp}-file4                                                                                      |
+		groupby -k1,5 -c6.MAX -c7.MAX -c8.MAX -c9.MAX                                                         >${tmp}-file5
+		
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+
+
+
+
+
+#CSVの作成
+#cd ${downloadPath}
+#cat ${tmp}-result|cat <(echo '年代GP 世代GP 社歴GP（グループ入社微を基準として設定） 従業員コード 従業員名称 社員区分名前 性別 年齢 社歴 社歴(年)※GP入社日 Company_name(会社) Belong1Name(本部) Belong2Name(支社・支店(部)) Belong3Name(支店・課) AreaName(エリア) 店舗NO(店舗CD) StoreName(店舗) 担当商品名 職位 役職 採用区分 TRIAL何社目 給与ステージ 基本等級 基本等級2 働き方 入社日（グループ） 入社日（トライアル） 生年 従業員管理ID') - | 
+#nkf -sxLw        |
+#sed 's/,/_/g'  |sed 's/ /,/g'  > ${sysflg}_"jinji"_${stime}_.csv  		
+#[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+
+#echo ${sysflg}_"jinji"_${stime}_.csv
+#[ $(errchk ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+
+
+# 終了
+rm -Rf ${tmp}-* &>/dev/null
+exit 0
