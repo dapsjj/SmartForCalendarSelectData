@@ -259,7 +259,7 @@ if [ -s ${tmp}-mdlquizattempts ];then  #-s ファイル長は0ではありませ
 		#11.mdluser_deleted 12.mdluser_username 13.mdluser_firstname 14.mdluser_lastname 15.mdluser_institution 16.mdluser_department
 		hrjoin -k3,4 -inull ${tmp}-mdlquizattempts -                                       |
 		ssort -k3,4                                                                        |
-		selrow -e '$2=="0000000465"&&$14=="0"&&$6'                                                    >${tmp}-mdlquizattempts-mdlquiz-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments		
+		selrow -e '$2=="0000000465"&&$14=="0"'                                             >${tmp}-mdlquizattempts-mdlquiz-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments		
 		#テキスト"${tmp}-mdlquizattempts-mdlquiz-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments"19列の内容:
 		#1.mdluserenrolments_enrolid(mdlenrol_id) 2.mdlenrol_courseid(mdlcourse_id,mdlquiz_course) 3.mdlquiz_id 4.mdluserenrolments_userid(mdluser_id,mdluserinfodata_userid) 5.mdlquizattempts_attempt 
 		#6.mdlquizattempts_timefinish 7.mdlquizattempts_sumgrades 8.mdlquiz_name 9.mdlquiz_sumgrades 10.mdlquiz_timeopen 
@@ -276,40 +276,26 @@ fi
 if [ -s ${tmp}-mdlquizattempts-mdlquiz-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments ];then  #-s ファイル長は0ではありません                                
 		cat ${tmp}-mdlquizattempts-mdlquiz-mdluserinfodata-mdluser-mdlcourse-mdlenrol-mdluserenrolments       |
 		selcol -c8 -c15 -c10,11 -c9 -c7 -c5,6                                                                 |
-	    ssort -k1,5                                                                                           | tee ${tmp}-file1 |
+	    ssort -k1,5                                                                                           |
 		#テキスト"${tmp}-file1"8列の内容:
 		#1.mdlquiz_name 2.mdluser_username(EmployeeCode) 3.mdlquiz_timeopen 4.mdlquiz_timeclose 5.mdlquiz_sumgrades 
 		#6.mdlquizattempts_sumgrades 7.mdlquizattempts_attempt 8.mdlquizattempts_timefinish 
-		groupby -k1,5 -c6.MAX -c7.MAX -c8.MAX                                                                 > ${tmp}-file2
-		#テキスト"${tmp}-file2"8列の内容:
+		groupby -k1,5 -c6.MAX -c7.MAX -c8.MAX                                                                 |
 		#1.mdlquiz_name 2.mdluser_username(EmployeeCode) 3.mdlquiz_timeopen 4.mdlquiz_timeclose 5.mdlquiz_sumgrades 
-		#6.MAX(mdlquizattempts_sumgrades) 7.MAX(mdlquizattempts_attempt) 8.MAX(mdlquizattempts_timefinish)
+		#6.MAX(mdlquizattempts_sumgrades) 7.MAX(mdlquizattempts_attempt) 8.MAX(mdlquizattempts_timefinish)	
 		
-		cat ${tmp}-file1                                                                                      |
-		hrjoin -k1,5 ${tmp}-file2 -                                                                           |
-		#1.mdlquiz_name 2.mdluser_username(EmployeeCode) 3.mdlquiz_timeopen 4.mdlquiz_timeclose 5.mdlquiz_sumgrades 
-		#6.MAX(mdlquizattempts_sumgrades) 7.MAX(mdlquizattempts_attempt) 8.MAX(mdlquizattempts_timefinish) 9.mdlquizattempts_sumgrades 10.mdlquizattempts_attempt 
-		#11.mdlquizattempts_timefinish 
-		
-		scalc '$1,$2,$3,$4,$5,$6,$6/$5*100,$7,$8'                                                             > ${tmp}-file3
+		scalc '$1,$2,$3,$4,$5,$6,$6/$5*100,$7,$8'                                                             |
 		#1.mdlquiz_name 2.mdluser_username(EmployeeCode) 3.mdlquiz_timeopen 4.mdlquiz_timeclose 5.mdlquiz_sumgrades 
 		#6.MAX(mdlquizattempts_sumgrades) 7.MAX(mqa.sumgrades) / mq.sumgrades * 100 8.MAX(mdlquizattempts_attempt) 9.MAX(mdlquizattempts_timefinish)
 		
-		cat ${tmp}-file3                                                                                      |
-		round -tA -c5.1 -c6.1 -c7.0                                                                           > ${tmp}-file4  
+		round -tA -c5.1 -c6.1 -c7.0                                                                           > ${tmp}-file1  
+		#テキスト"${tmp}-file1"8列の内容:
 		#1.mdlquiz_name 2.mdluser_username(EmployeeCode) 3.mdlquiz_timeopen 4.mdlquiz_timeclose 5.ROUND(mdlquiz_sumgrades,1)
 		#6.ROUND(MAX(mdlquizattempts_sumgrades),1) 7.ROUND(MAX(mqa.sumgrades) / mq.sumgrades * 100,0) 8.MAX(mdlquizattempts_attempt) 9.MAX(mdlquizattempts_timefinish)
-		
-		cat ${tmp}-file4                                                                                      |
-		groupby -k1,5 -c6.MAX -c7.MAX -c8.MAX -c9.MAX                                                         >${tmp}-file5
-		
 		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
 else
   ERROR_EXIT
 fi
-
-
-
 
 
 
@@ -325,5 +311,5 @@ fi
 
 
 # 終了
-rm -Rf ${tmp}-* &>/dev/null
+#rm -Rf ${tmp}-* &>/dev/null
 exit 0
