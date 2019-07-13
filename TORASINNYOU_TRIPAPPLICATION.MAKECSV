@@ -1,0 +1,309 @@
+#!/bin/bash -xv
+#
+# TORASINNYOU_TRIPAPPLICATION.MAKECSV>> 出張申請データ生成
+# Usage : TORASINNYOU_TRIPAPPLICATION.MAKECSV '10128204,10109664' '0' '0' '20190501' '20190710' or TORASINNYOU_TRIPAPPLICATION.MAKECSV '0' '10005' '0' '20190501' '20190518' or TORASINNYOU_TRIPAPPLICATION.MAKECSV '0' '10005' '10696' '20190203' '20190710'  
+#
+# Written by song.jiajun /Date : 20190712
+# Modified by song.jiajun /Date : 20190712
+
+
+#/////////////////////////////////////////////////////////////////////////
+# 初期設定
+#/////////////////////////////////////////////////////////////////////////
+# パスの定義
+export PATH=/home/SMART_TRIAL:/home/SMART:/usr/local/bin:${PATH}
+export LANG=ja_JP.UTF-8
+
+HOME=/home/trial
+logd=${HOME}/AP/TORASINNYOU/LOG                  # ログディレクトリ
+
+# 走行ログの記録
+echo   "${logd}/LOG.$(basename $0).$(date +%Y%m%d)_$(date +%H%M%S)_$$" &> /dev/null
+exec 2> ${logd}/LOG.$(basename $0).$(date +%Y%m%d)_$(date +%H%M%S)_$$
+
+# 変数の定義
+semd=${HOME}/SEMAPHORE
+tmp=/tmp/$$-$(basename $0)_$(date +%Y%m%d)_$(date +%H%M%S)
+sday=$(date +%Y%m%d)                             # 日付
+sday1=$(date +%Y)
+lv3d=/TORASINNYOU/LV3/TRIP                       # Level3ディレクトリ
+lv3d1=/TORASINNYOU/LV3/JINJI                     # Level3ディレクトリ1
+paraEmployeeCDList=$1                            # EmployeeCDリスト
+paraCompanyCode=$2                               # CompanyCode
+paraBelong1Code=$3                               # Belong1Code
+paraStartDate=$4                                 # 出発開始日
+paraEndDate=$5                                   # 出発終了日
+
+
+downloadPath=/home/trial/AP/TORASINNYOU/DOWNLOAD
+sysflg="TORASINNYOU"
+stime=$(date +%Y%m%d%H%M%S)_$$
+
+# エラー時の終了処理定義
+ERROR_EXIT(){
+  touch ${semd}/$(basename $0).${HOSTNAME}.ERROR.${sday}
+  exit 1
+}
+
+#SEMAPHORE削除
+rm -rf ${semd}/$(basename $0)*${sday}
+
+
+#/////////////////////////////////////////////////////////////////////////
+# 処理部分
+#/////////////////////////////////////////////////////////////////////////
+
+if [ ${paraEmployeeCDList} != '0' ];then 
+	echo ${paraEmployeeCDList}                                                     |
+	sed 's/\,/ /g'                                                                 | 
+	tov                                                                            |
+	fmtfixed -w10 -c1                                                              |
+	ssort -k1                                                                      >${tmp}-EmployeeCDList 
+	#","を" "に置き換える                                                               
+	#テキスト"${tmp}-EmployeeCDList"1列の内容:                                          
+	#1.従業員CD 
+	[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+fi
+
+if [ ${paraCompanyCode} != "0" ];then 
+	echo ${paraCompanyCode}                                                        |
+	fmtfixed -w10 -c1                                                              |
+	ssort -k1                                                                      >${tmp}-CompanyCode                                           
+	#1.CompanyCode 
+	[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+fi
+
+if [ ${paraBelong1Code} != "0" ];then 
+	echo ${paraBelong1Code}                                                        |
+	fmtfixed -w10 -c1                                                              |
+	ssort -k1                                                                      >${tmp}-Belong1Code                                           
+	#1.Belong1Code 
+	[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+fi
+
+#判断LV3ファイルTRIPAPPLICATION.gz存在
+if [ -e ${lv3d}/TRIPAPPLICATION.gz ];then
+		#TRIPAPPLICATION.gzの第1~44,3列を取る
+		zcat ${lv3d}/TRIPAPPLICATION.gz                                            | 
+		selcol -c1,44 -c3                                                          | 
+		substr -c45.1.8                                                            |
+		#第45列出発日截取前8位
+		fmtfixed -w10 -c1,2                                                        |
+		fmtfixed -w10 -c37,42                                                      |
+		ssort -k1                                                                  >${tmp}-tripapplication
+		#テキスト"${tmp}-tripapplication"45列の内容:
+		#1.出張番号 2.申請者従業員管理ID	3.出発日	4.帰着日	5.出張地区（その他）	
+		#6.出張目的 7.その他経費合計 8.日当合計 9.宿泊費合計 10.交通費合計	
+		#11.出張費合計⇒現金合計 12.同行者	13.備考 14.出張区分	
+		#15.登録者従業員管理ID 16.登録日 17.更新者従業員管理ID 18.更新日 19.進捗状態番号 20.進捗状態関係者番号
+		#21.承認却下コメント 22.自家用車費用項目番号 23.ワークフローID 24.出張種類 25.出張成果物
+		#26.移動行程出発日 27.移動行程帰着日 28.移動行程備考 29.法人(クレ)合計 30.総務予約合計
+		#31.WF中次の承認者社員番号 32.交通費総合計 33.宿泊費総合計 34.その他経費総合計 35.給与ステージ
+		#36.職位等級 37.所属会社コード	38.管轄NO１ 39.所属・チームNO 40.課・ディビジョンNO
+		#41.エリアNO 42.店舗NO 43.所属組織 44.備考 45.出発日(yyyymmdd)
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルEMPLOYEEBASIC.gz存在
+if [ -e ${lv3d1}/EMPLOYEEBASIC.gz ];then 
+		#EMPLOYEEBASIC.gzの第1、2、3列を取る
+		zcat ${lv3d1}/EMPLOYEEBASIC.gz                                         | 
+		selrow -e '$14!=1&&$14!=2'                                             |
+        selrow -e '$28==1||$28==3'		                                       |
+		selcol -c1,3                                                           |
+		ssort -k1                                                              >${tmp}-employeebasic
+		#テキスト"${tmp}-employeebasic"3列の内容:
+		#1.従業員管理ID 2.従業員コード 3.従業員名称 
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルORGANIZATIONALL.gz存在
+if [ -e ${lv3d1}/ORGANIZATIONALL.gz ];then
+		#ORGANIZATIONALL.gzの第1、4、7、10、13、16、2、5、8、11、14、17列を取る
+		zcat ${lv3d1}/ORGANIZATIONALL.gz                                       | 
+		selcol -c1 -c4 -c7 -c10 -c13 -c16 -c2 -c5 -c8 -c11 -c14 -c17           | 
+		fmtfixed -w10 -c1,6                                                    | 
+		ssort -k1,6                                                            >${tmp}-organizationall
+		#テキスト"${tmp}-organizationall"12列の内容:
+		#1.Company_code 2.Belong1Code 3.Belong2Code 4.Belong3Code 5.AreaCode
+		#6.StoreCode 7.Company_name 8.Belong1Name 9.Belong2Name 10.Belong3Name
+		#11.AreaName 12.StoreName				
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+#判断LV3ファイルATTRIBUTE.gz存在
+if [ -e ${lv3d1}/ATTRIBUTE.gz ];then
+		#ATTRIBUTE.gzの第1、2、3、4、5、6、7列を取る
+		zcat ${lv3d1}/ATTRIBUTE.gz                                             | 
+		selcol -c1,7                                                           | 
+		fmtfixed -w10 -c1,7                                                    |
+		ssort -k2,7                                                            >${tmp}-attribute
+		#テキスト"${tmp}-attribute"7列の内容:
+		#1.EmployeeManagementID 2.所属会社コード 3.管轄NO１ 4.所属・チームNO 5.課・ディビジョンNO
+		#6.エリアNO 7.店舗NO 
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+else
+  ERROR_EXIT
+fi
+
+if [ -s ${tmp}-tripapplication ];then 
+	hrjoin -k2  ${tmp}-employeebasic ${tmp}-tripapplication                    >${tmp}-employeebasic-tripapplication
+	#テキスト"${tmp}-employeebasic-employeebasic"47列の内容:
+	#1.出張番号 2.申請者従業員管理ID 3.従業員コード 4.従業員名称 5.出発日	
+	#6.帰着日 7.出張地区（その他） 8.出張目的 9.その他経費合計 10.日当合計 
+	#11.宿泊費合計 12.交通費合計	13.出張費合計⇒現金合計 14.同行者	15.備考 
+	#16.出張区分	17.登録者従業員管理ID 18.登録日 19.更新者従業員管理ID 20.更新日 
+	#21.進捗状態番号 22.進捗状態関係者番号 23.承認却下コメント 24.自家用車費用項目番号 25.ワークフローID 
+	#26.出張種類 27.出張成果物 28.移動行程出発日 29.移動行程帰着日 30.移動行程備考 
+	#31.法人(クレ)合計 32.総務予約合計 33.WF中次の承認者社員番号 34.交通費総合計 35.宿泊費総合計 
+	#36.その他経費総合計 37.給与ステージ 38.職位等級 39.所属会社コード	40.管轄NO１ 
+	#41.所属・チームNO 42.課・ディビジョンNO 43.エリアNO 44.店舗NO 45.所属組織 
+	#46.備考 47.出発日(yyyymmdd)
+else
+  ERROR_EXIT
+fi
+
+
+if [ -s ${tmp}-employeebasic-tripapplication ];then 
+	hrjoin -k39,44  ${tmp}-organizationall ${tmp}-employeebasic-tripapplication    >${tmp}-organizationall-employeebasic-tripapplication
+	#テキスト"${tmp}-employeebasic-employeebasic"53列の内容:
+	#1.出張番号 2.申請者従業員管理ID 3.従業員コード 4.従業員名称 5.出発日	
+	#6.帰着日 7.出張地区（その他） 8.出張目的 9.その他経費合計 10.日当合計 
+	#11.宿泊費合計 12.交通費合計	13.出張費合計⇒現金合計 14.同行者	15.備考 
+	#16.出張区分	17.登録者従業員管理ID 18.登録日 19.更新者従業員管理ID 20.更新日 
+	#21.進捗状態番号 22.進捗状態関係者番号 23.承認却下コメント 24.自家用車費用項目番号 25.ワークフローID 
+	#26.出張種類 27.出張成果物 28.移動行程出発日 29.移動行程帰着日 30.移動行程備考 
+	#31.法人(クレ)合計 32.総務予約合計 33.WF中次の承認者社員番号 34.交通費総合計 35.宿泊費総合計 
+	#36.その他経費総合計 37.給与ステージ 38.職位等級 39.所属会社コード	40.管轄NO１ 
+	#41.所属・チームNO 42.課・ディビジョンNO 43.エリアNO 44.店舗NO 45.Company_name(会社) 
+	#46.Belong1Name(本部) 47.Belong2Name(支社・支店(部)) 48.Belong3Name(支店・課) 49.AreaName(エリア) 50.StoreName(店舗)
+	#51.所属組織 52.備考 53.出発日(yyyymmdd)
+else
+  ERROR_EXIT
+fi
+
+
+if [ -s ${tmp}-organizationall-employeebasic-tripapplication ];then  
+	if [ ${paraEmployeeCDList} != '0' ];then  #EmployeeCDList!=''
+		cat ${tmp}-organizationall-employeebasic-tripapplication                                                          |
+	    hejoin -k3 ${tmp}-EmployeeCDList -                                                                                |
+		selrow -e '$53>='${paraStartDate}'&&$53<='${paraEndDate}                                                          |
+		selcol -c1,53                                                                                                     >${tmp}-result-1
+		#テキスト"${tmp}-result-1"53列の内容:
+		#1.出張番号 2.申請者従業員管理ID 3.従業員コード 4.従業員名称 5.出発日	
+		#6.帰着日 7.出張地区（その他） 8.出張目的 9.その他経費合計 10.日当合計 
+		#11.宿泊費合計 12.交通費合計	13.出張費合計⇒現金合計 14.同行者	15.備考 
+		#16.出張区分	17.登録者従業員管理ID 18.登録日 19.更新者従業員管理ID 20.更新日 
+		#21.進捗状態番号 22.進捗状態関係者番号 23.承認却下コメント 24.自家用車費用項目番号 25.ワークフローID 
+		#26.出張種類 27.出張成果物 28.移動行程出発日 29.移動行程帰着日 30.移動行程備考 
+		#31.法人(クレ)合計 32.総務予約合計 33.WF中次の承認者社員番号 34.交通費総合計 35.宿泊費総合計 
+		#36.その他経費総合計 37.給与ステージ 38.職位等級 39.所属会社コード	40.管轄NO１ 
+		#41.所属・チームNO 42.課・ディビジョンNO 43.エリアNO 44.店舗NO 45.Company_name(会社) 
+		#46.Belong1Name(本部) 47.Belong2Name(支社・支店(部)) 48.Belong3Name(支店・課) 49.AreaName(エリア) 50.StoreName(店舗)
+		#51.所属組織 52.備考 53.出発日(yyyymmdd)
+		[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+
+
+	else
+		if [ ${paraCompanyCode} != '0' ];then  #select CompanyCode
+			if [ ${paraBelong1Code} != '0' ]; then  #select Belong1Code
+				cat ${tmp}-attribute                                                                                         |
+				hejoin -k2  ${tmp}-CompanyCode -                                                                             | 	
+				hejoin -k3  ${tmp}-Belong1Code -                                                                             |
+				selcol -c1                                                                                                   |
+				ssort -k1                                                                                                    >${tmp}-employeelist-1	
+				#テキスト"${tmp}-employeelist-1"1列の内容:
+				#1.EmployeeManagementID 
+				
+				cat ${tmp}-organizationall-employeebasic-tripapplication                                                     |
+				hejoin -k2 ${tmp}-employeelist-1 -                                                                           |
+				selrow -e '$53>='${paraStartDate}'&&$53<='${paraEndDate}                                                     |
+				selcol -c1,53                                                                                                >${tmp}-result-1
+				#テキスト"${tmp}-result-1"53列の内容:
+				#1.出張番号 2.申請者従業員管理ID 3.従業員コード 4.従業員名称 5.出発日	
+				#6.帰着日 7.出張地区（その他） 8.出張目的 9.その他経費合計 10.日当合計 
+				#11.宿泊費合計 12.交通費合計	13.出張費合計⇒現金合計 14.同行者	15.備考 
+				#16.出張区分	17.登録者従業員管理ID 18.登録日 19.更新者従業員管理ID 20.更新日 
+				#21.進捗状態番号 22.進捗状態関係者番号 23.承認却下コメント 24.自家用車費用項目番号 25.ワークフローID 
+				#26.出張種類 27.出張成果物 28.移動行程出発日 29.移動行程帰着日 30.移動行程備考 
+				#31.法人(クレ)合計 32.総務予約合計 33.WF中次の承認者社員番号 34.交通費総合計 35.宿泊費総合計 
+				#36.その他経費総合計 37.給与ステージ 38.職位等級 39.所属会社コード	40.管轄NO１ 
+				#41.所属・チームNO 42.課・ディビジョンNO 43.エリアNO 44.店舗NO 45.Company_name(会社) 
+				#46.Belong1Name(本部) 47.Belong2Name(支社・支店(部)) 48.Belong3Name(支店・課) 49.AreaName(エリア) 50.StoreName(店舗)
+				#51.所属組織 52.備考 53.出発日(yyyymmdd)
+				
+				[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+			else #no select Belong1Code
+				cat ${tmp}-attribute                                                                                         |
+				hejoin -k2  ${tmp}-CompanyCode -                                                                             |
+				selcol -c1                                                                                                   |
+				ssort -k1                                                                                                    >${tmp}-employeelist-1	
+				#テキスト"${tmp}-employeelist-1"1列の内容:
+				#1.EmployeeManagementID
+				
+				cat ${tmp}-organizationall-employeebasic-tripapplication                                                     |
+				hejoin -k2 ${tmp}-employeelist-1 -                                                                           |
+				selrow -e '$53>='${paraStartDate}'&&$53<='${paraEndDate}                                                     |
+				selcol -c1,53                                                                                                >${tmp}-result-1
+				#テキスト"${tmp}-result-1"53列の内容:
+				#1.出張番号 2.申請者従業員管理ID 3.従業員コード 4.従業員名称 5.出発日	
+				#6.帰着日 7.出張地区（その他） 8.出張目的 9.その他経費合計 10.日当合計 
+				#11.宿泊費合計 12.交通費合計	13.出張費合計⇒現金合計 14.同行者	15.備考 
+				#16.出張区分	17.登録者従業員管理ID 18.登録日 19.更新者従業員管理ID 20.更新日 
+				#21.進捗状態番号 22.進捗状態関係者番号 23.承認却下コメント 24.自家用車費用項目番号 25.ワークフローID 
+				#26.出張種類 27.出張成果物 28.移動行程出発日 29.移動行程帰着日 30.移動行程備考 
+				#31.法人(クレ)合計 32.総務予約合計 33.WF中次の承認者社員番号 34.交通費総合計 35.宿泊費総合計 
+				#36.その他経費総合計 37.給与ステージ 38.職位等級 39.所属会社コード	40.管轄NO１ 
+				#41.所属・チームNO 42.課・ディビジョンNO 43.エリアNO 44.店舗NO 45.Company_name(会社) 
+				#46.Belong1Name(本部) 47.Belong2Name(支社・支店(部)) 48.Belong3Name(支店・課) 49.AreaName(エリア) 50.StoreName(店舗)
+				#51.所属組織 52.備考 53.出発日(yyyymmdd)
+				[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+			fi
+		fi
+	fi		
+else
+  ERROR_EXIT	
+fi
+
+
+if [ -e ${tmp}-result-1 ];then  
+	cat ${tmp}-result-1                                                                                            |
+	selcol -c3 -c2 -c1 -c4,39 -c45 -c40 -c46 -c41 -c47 -c42 -c48 -c43 -c49 -c44 -c50 -c51 -c52                     >${tmp}-result 
+	#テキスト"${tmp}-result-1"52列の内容:
+	#1.従業員コード 2.申請者従業員管理ID 3.出張番号 4.従業員名称 5.出発日	
+	#6.帰着日 7.出張地区（その他） 8.出張目的 9.その他経費合計 10.日当合計 
+	#11.宿泊費合計 12.交通費合計	13.出張費合計⇒現金合計 14.同行者	15.備考 
+	#16.出張区分	17.登録者従業員管理ID 18.登録日 19.更新者従業員管理ID 20.更新日 
+	#21.進捗状態番号 22.進捗状態関係者番号 23.承認却下コメント 24.自家用車費用項目番号 25.ワークフローID 
+	#26.出張種類 27.出張成果物 28.移動行程出発日 29.移動行程帰着日 30.移動行程備考 
+	#31.法人(クレ)合計 32.総務予約合計 33.WF中次の承認者社員番号 34.交通費総合計 35.宿泊費総合計 
+	#36.その他経費総合計 37.給与ステージ 38.職位等級 39.所属会社コード	40.Company_name(会社) 
+	#41.管轄NO１ 42.Belong1Name(本部) 43.所属・チームNO 44.Belong2Name(支社・支店(部)) 45.課・ディビジョンNO
+	#46.Belong3Name(支店・課) 47.エリアNO 48.AreaName(エリア) 49.店舗NO 50.StoreName(店舗)
+	#51.所属組織 52.備考
+	[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+fi
+
+
+
+#CSVの作成
+cd ${downloadPath}
+cat ${tmp}-result|cat <(echo '従業員コード 申請者従業員管理ID 出張番号 従業員名称 出発日 帰着日 出張地区（その他） 出張目的 その他経費合計 日当合計 宿泊費合計 交通費合計 出張費合計⇒現金合計 同行者 備考 出張区分 登録者従業員管理ID 登録日 更新者従業員管理ID 更新日 進捗状態番号 進捗状態関係者番号 承認却下コメント 自家用車費用項目番号 ワークフローID 出張種類 出張成果物 移動行程出発日 移動行程帰着日 移動行程備考 法人(クレ)合計 総務予約合計 WF中次の承認者社員番号 交通費総合計 宿泊費総合計 その他経費総合計 給与ステージ 職位等級 所属会社コード Company_name(会社) 管轄NO１ Belong1Name(本部) 所属・チームNO Belong2Name(支社・支店(部)) 課・ディビジョンNO Belong3Name(支店・課) エリアNO AreaName(エリア) 店舗NO StoreName(店舗) 所属組織 備考') - | 
+nkf -sxLw        |
+sed 's/,/_/g'  |sed 's/ /,/g'  > ${sysflg}_"tripapplication"_${stime}_.csv  		
+[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+
+echo ${sysflg}_"tripapplication"_${stime}_.csv
+[ $(errchk ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
+
+
+# 終了
+rm -Rf ${tmp}-* &>/dev/null
+exit 0
+
