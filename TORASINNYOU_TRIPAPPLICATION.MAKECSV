@@ -316,7 +316,7 @@ fi
 
 
 if [ -e ${tmp}-result-1 ];then  #ファイル${tmp}-result-1があります
-	if [ -s ${tmp}-result-1 ];then  #ファイル${tmp}-result-1に内容があります
+	if [ -s ${tmp}-result-1 ];then  #ファイル${tmp}-result-1に内容があります,マスターを接続して属性名を取得します。
 		cat ${tmp}-result-1                                                                                     |
 		selcol -c3 -c2 -c1 -c4,39 -c45 -c40 -c46 -c41 -c47 -c42 -c48 -c43 -c49 -c44 -c50 -c51 -c52          	|	
 		fmtfixed -w2 -c16                                                                                       | 
