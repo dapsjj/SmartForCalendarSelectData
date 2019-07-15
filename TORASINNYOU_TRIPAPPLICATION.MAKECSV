@@ -111,7 +111,7 @@ if [ -e ${lv3d1}/EMPLOYEEBASIC.gz ];then
 		#EMPLOYEEBASIC.gzの第1、2、3列を取る
 		zcat ${lv3d1}/EMPLOYEEBASIC.gz                                         | 
 		#selrow -e '$14!=1&&$14!=2'                                             |
-        selrow -e '$28==1||$28==3'		                                       |
+        #selrow -e '$28==1||$28==3'		                                       |
 		selcol -c1,3                                                           |
 		ssort -k1                                                              >${tmp}-employeebasic
 		#テキスト"${tmp}-employeebasic"3列の内容:
@@ -154,16 +154,11 @@ fi
 
 
 
-#tmp master作成
-
-
-
-
-
+#tmp master作成 begin 
 
 #【出張区分】
 #0:国内出張、1:海外出張
-echo '0 0:国内出張 1 1:海外出張'                                                       |
+echo '0 0:国内出張 1 1:海外出張'                                                        |
 tov -n2                                                                            |
 fmtfixed -w2 -c1                                                                   |
 ssort -k1                                                                          >${tmp}-travel-differentiation    
@@ -190,48 +185,13 @@ ssort -k1                                                                       
 
 #【出張種類】
 #1:業務命令　2:合宿　3:？？　4:配転
-echo '1 1:業務命令 2 2:合宿 3 3:？？ 4 4:配転'                                          |
+echo '1 1:業務命令 2 2:合宿 3 3:？？ 4 4:配転'                                           |
 tov -n2                                                                            |
 fmtfixed -w2 -c1                                                                   |
 ssort -k1                                                                          >${tmp}-travel-type    
 [ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT 
 
-
-#【状態区分】TicketStateNo	
-#0:未確定 1:予約済 2:予約通り 3:キャンセル 5:予約中
-echo '0 0:未確定 1 1:予約済 2 2:予約通り 3 3:キャンセル 5 5:予約中'                           |
-tov -n2                                                                            |
-fmtfixed -w2 -c1                                                                   |
-ssort -k1                                                                          >${tmp}-status-differentiation    
-[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT 
-
-
-#【出金方法区分】
-#1:小口出金 2:振込 3:無し 4:小口返金 5:給与控除返金
-echo '1 1:小口出金 2 2:振込 3 3:無し 4 4:小口返金 5 5:給与控除返金'                         |
-tov -n2                                                                            |
-fmtfixed -w2 -c1                                                                   |
-ssort -k1                                                                          >${tmp}-payment-method-differentiation  
-[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT 
-
-
-#【出金状態区分】
-#0:未出金 1:精算準備　2:出金済（振込出金の場合、振込出金した後で、「2」になる） 3:給与控除経理部長承認待ち 4:給与控除経理部長承認した出金待ち
-echo '0 0:未出金 1 1:精算準備 2 2:出金済（振込出金の場合、振込出金した後で、「2」になる） 3 3:給与控除経理部長承認待ち 4 4:給与控除経理部長承認した出金待ち'       |
-tov -n2                                                                            |
-fmtfixed -w2 -c1                                                                   |
-ssort -k1                                                                          >${tmp}-payment-status-differentiation  
-[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT 
-
-
-#【仕訳状態区分】
-#0:未仕訳 1:仕訳済
-echo '0 0:未仕訳 1 1:仕訳済'                                                          |
-tov -n2                                                                            |
-fmtfixed -w2 -c1                                                                   |
-ssort -k1                                                                          >${tmp}-classification-status-differentiation    
-[ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT 
-
+#tmp master作成 end 
 
 
 
@@ -438,7 +398,9 @@ fi
 
 #CSVの作成
 cd ${downloadPath}
-cat ${tmp}-result|cat <(echo '従業員コード 申請者従業員管理ID 出張番号 従業員名称 出発日 帰着日 出張地区（その他） 出張目的 その他経費合計 日当合計 宿泊費合計 交通費合計 出張費合計⇒現金合計 同行者 備考 出張区分 登録者従業員管理ID 登録日 更新者従業員管理ID 更新日 進捗状態番号 進捗状態関係者番号 承認却下コメント 自家用車費用項目番号 ワークフローID 出張種類 出張成果物 移動行程出発日 移動行程帰着日 移動行程備考 法人(クレ)合計 総務予約合計 WF中次の承認者社員番号 交通費総合計 宿泊費総合計 その他経費総合計 給与ステージ 職位等級 所属会社コード Company_name(会社) 管轄NO１ Belong1Name(本部) 所属・チームNO Belong2Name(支社・支店(部)) 課・ディビジョンNO Belong3Name(支店・課) エリアNO AreaName(エリア) 店舗NO StoreName(店舗) 所属組織 備考') - | 
+cat ${tmp}-result                                                         |
+sed "s/'/_/g" |sed 's/"/_/g' |sed 's/　/_/g' |sed 's/\t/_/g'               |
+cat <(echo '従業員コード 申請者従業員管理ID 出張番号 従業員名称 出発日 帰着日 出張地区（その他） 出張目的 その他経費合計 日当合計 宿泊費合計 交通費合計 出張費合計⇒現金合計 同行者 備考 出張区分 登録者従業員管理ID 登録日 更新者従業員管理ID 更新日 進捗状態番号 進捗状態関係者番号 承認却下コメント 自家用車費用項目番号 ワークフローID 出張種類 出張成果物 移動行程出発日 移動行程帰着日 移動行程備考 法人(クレ)合計 総務予約合計 WF中次の承認者社員番号 交通費総合計 宿泊費総合計 その他経費総合計 給与ステージ 職位等級 所属会社コード Company_name(会社) 管轄NO１ Belong1Name(本部) 所属・チームNO Belong2Name(支社・支店(部)) 課・ディビジョンNO Belong3Name(支店・課) エリアNO AreaName(エリア) 店舗NO StoreName(店舗) 所属組織 備考') - | 
 nkf -sxLw        |
 sed 's/,/_/g'  |sed 's/ /,/g'  > ${sysflg}_"tripapplication"_${stime}_.csv  		
 [ $(errchk  ${PIPESTATUS[@]}) -eq 0 ] || ERROR_EXIT
