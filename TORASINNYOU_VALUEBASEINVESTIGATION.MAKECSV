@@ -95,6 +95,8 @@ fi
 ##従業員基本情報
 if [ -e ${lv3d}/JINJI/EMPLOYEEBASIC.gz ];then
     zcat ${lv3d}/JINJI/EMPLOYEEBASIC.gz                                        |
+	selrow -e '$28==1||$28==3'		                                           |
+	#selrow -e '$14!=1&&$14!=2'                                                 |
     #1:従業員管理ID 2:社員番号 3:社員名 4:...
     selcol -c1,3                                                               |
     #1:従業員管理ID 2:社員番号 3:社員名
