@@ -214,7 +214,7 @@ fi
 
 
 if [ -s ${tmp}-employeebasic-tripapplication ];then 
-	hrjoin -k39,44  ${tmp}-organizationall ${tmp}-employeebasic-tripapplication    >${tmp}-organizationall-employeebasic-tripapplication
+	hrjoin -k39,44 -inull ${tmp}-organizationall ${tmp}-employeebasic-tripapplication    >${tmp}-organizationall-employeebasic-tripapplication
 	#テキスト"${tmp}-employeebasic-employeebasic"53列の内容:
 	#1.出張番号 2.申請者従業員管理ID 3.従業員コード 4.従業員名称 5.出発日	
 	#6.帰着日 7.出張地区（その他） 8.出張目的 9.その他経費合計 10.日当合計 
@@ -363,7 +363,7 @@ if [ -e ${tmp}-result-1 ];then  #ファイル${tmp}-result-1があります
 		#36.WF中次の承認者社員番号 37.交通費総合計 38.宿泊費総合計 39.その他経費総合計 40.給与ステージ 
 		#41.職位等級 42.所属会社コード 43.Company_name(会社) 44.管轄NO１ 45.Belong1Name(本部)
 		#46.所属・チームNO 47.Belong2Name(支社・支店(部)) 48.課・ディビジョンNO 49.Belong3Name(支店・課) 50.エリアNO 
-		#51.AreaName(エリア) 52.店舗NO 53.StoreName(店舗) 54.所属組織 55.備考		
+		#51.AreaName(エリア) 52.店舗NO 53.StoreName(店舗) 54.所属組織 55.備考			
 		selcol -c1,15 -c17,21 -c23,27 -c29,55                                                                   >${tmp}-result
 		#テキスト"${tmp}-result"52列の内容:
 		#1.従業員コード 2.申請者従業員管理ID 3.出張番号 4.従業員名称 5.出発日	
