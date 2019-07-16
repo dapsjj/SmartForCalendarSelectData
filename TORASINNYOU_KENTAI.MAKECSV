@@ -183,7 +183,8 @@ fi
 
 
 #判断${tmp}-resultoperationplan存在
-if [ -s ${tmp}-resultoperationplan ];then #-s ファイル長は0ではありません
+#if [ -s ${tmp}-resultoperationplan ];then #-s ファイル長は0ではありません
+if [ -e ${tmp}-resultoperationplan ];then 
 		cat ${tmp}-resultoperationplan                                             |
 		fmtfixed -w2 -c29                                                          |
 		hrjoin -k29 -inull ${tmp}-retirementdivision -                             |
@@ -204,7 +205,8 @@ fi
 
 
 #判断${tmp}-resultoperationplan-file1存在
-if [ -s ${tmp}-resultoperationplan-file1 ];then  #-s ファイル長は0ではありません
+#if [ -s ${tmp}-resultoperationplan-file1 ];then  #-s ファイル長は0ではありません
+if [ -e ${tmp}-resultoperationplan-file1 ];then  
 		cat ${tmp}-resultoperationplan-file1                                             |
 		fmtfixed -w2 -c31                                                                |
 		hrjoin -k31 -inull ${tmp}-jmstemploymenttype -                                   |
@@ -226,7 +228,8 @@ fi
 
 
 #判断${tmp}-resultoperationplan-file2存在
-if [ -s ${tmp}-resultoperationplan-file2 ];then  #-s ファイル長は0ではありません
+#if [ -s ${tmp}-resultoperationplan-file2 ];then  #-s ファイル長は0ではありません
+if [ -e ${tmp}-resultoperationplan-file2 ];then  
 		cat ${tmp}-resultoperationplan-file2                                             |
 		fmtfixed -w2 -c37                                                                |
 		hrjoin -k37 -inull ${tmp}-tmattendance -                                         |
